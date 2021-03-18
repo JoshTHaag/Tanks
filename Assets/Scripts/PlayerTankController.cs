@@ -35,8 +35,8 @@ public class PlayerTankController : MonoBehaviour
 
         aimInput = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-        fireHoldInput = Input.GetMouseButtonDown(0);
-        fireReleaseInput = Input.GetMouseButtonUp(0);
+        fireHoldInput = Input.GetMouseButtonDown(0) && Application.isFocused;
+        fireReleaseInput = Input.GetMouseButtonUp(0) && Application.isFocused;
     }
 
     private void OnValidate()

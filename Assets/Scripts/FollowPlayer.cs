@@ -8,7 +8,7 @@ public class FollowPlayer : MonoBehaviour
 
     public float smoothSpeed = 0.1f;
 
-    private void LateUpdate()
+    private void FixedUpdate()
     {
         Vector3 targetPosition = new Vector3(followTarget.position.x, followTarget.position.y, transform.position.z);
 
