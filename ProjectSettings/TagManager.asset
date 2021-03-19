@@ -14,8 +14,8 @@ TagManager:
   - TankBody
   - HitBox
   - Attack
-  - 
-  - 
+  - MapBounds
+  - Wheels
   - 
   - 
   - 
@@ -43,4 +43,7 @@ TagManager:
     locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Attack
+    uniqueID: 3247668945
     locked: 0

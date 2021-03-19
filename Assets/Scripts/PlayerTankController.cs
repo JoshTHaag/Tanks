@@ -17,13 +17,13 @@ public class PlayerTankController : MonoBehaviour
 
         tank.Drive(moveInput.x);
 
-        tank.Aim(aimInput);
+        //tank.Aim(aimInput);
 
-        if (fireHoldInput)
-            tank.ChargeFire();
+        //if (fireHoldInput)
+        //    tank.ChargeFire();
 
-        if(fireReleaseInput)
-            tank.Fire();
+        //if(fireReleaseInput)
+        //    tank.Fire();
     }
 
     void SampleInput()

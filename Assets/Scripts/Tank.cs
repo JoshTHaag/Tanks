@@ -24,8 +24,8 @@ public class Tank : MonoBehaviour
     [SerializeField, ReadOnly] WheelJoint2D[] wheels;
 
     float driveInput = 0f;
-    float fireChargeTimestamp;
-    bool isFireCharging = false;
+
+    float power;
 
     private void Awake()
     {
@@ -53,38 +53,24 @@ public class Tank : MonoBehaviour
         }
     }
 
-    public void Aim(Vector2 targetPosition)
+
+    public void Aim(float rotation)
     {
-        Vector2 targetVector = (targetPosition - (Vector2)transform.position).normalized;
-        float rotation = Mathf.Atan2(targetVector.y, targetVector.x) * Mathf.Rad2Deg;
         if (rotation < -90f) rotation = 180f;
         else if (rotation < 0f) rotation = 0f;
         turretPivot.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
     }
 
-    public void Fire()
+    public void SetPower(float power)
     {
-        if (!isFireCharging)
-        {
-            fireChargeTimestamp = Time.time;
-        }
-        else
-        {
-            isFireCharging = false;
-        }
-
-        Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
-        float force = Mathf.Clamp(((Time.time - fireChargeTimestamp) * chargeForcePerSecond), minFireForce, maxFireForce);
-        proj.force = proj.transform.right * force;
+        this.power = power;
     }
 
-    public void ChargeFire()
+    public void Fire()
     {
-        if(!isFireCharging)
-        {
-            isFireCharging = true;
-            fireChargeTimestamp = Time.time;
-        }
+        Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
+        float force = Mathf.Clamp(power, minFireForce, maxFireForce);
+        proj.force = proj.transform.right * force;
     }
 
     private void OnValidate()
@@ -97,3 +83,43 @@ public class Tank : MonoBehaviour
     {
     }
 }
+
+
+//float fireChargeTimestamp;
+//bool isFireCharging = false;
+
+//public void Aim(Vector2 targetPosition)
+//{
+//    Vector2 targetVector = (targetPosition - (Vector2)transform.position).normalized;
+//    float rotation = Mathf.Atan2(targetVector.y, targetVector.x) * Mathf.Rad2Deg;
+//    if (rotation < -90f) rotation = 180f;
+//    else if (rotation < 0f) rotation = 0f;
+//    turretPivot.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
+//}
+
+
+//public void Fire()
+//{
+//    if (!isFireCharging)
+//    {
+//        fireChargeTimestamp = Time.time;
+//    }
+//    else
+//    {
+//        isFireCharging = false;
+//    }
+
+//    Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
+//    float force = Mathf.Clamp(((Time.time - fireChargeTimestamp) * chargeForcePerSecond), minFireForce, maxFireForce);
+//    proj.force = proj.transform.right * force;
+//}
+
+
+//public void ChargeFire()
+//{
+//    if (!isFireCharging)
+//    {
+//        isFireCharging = true;
+//        fireChargeTimestamp = Time.time;
+//    }
+//}
