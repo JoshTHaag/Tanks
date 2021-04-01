@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
         if (Instance != this)
             return;
 
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        TanksNetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
         StartGame();
     }
@@ -53,7 +53,7 @@ public class GameManager : MonoBehaviour
 
     void OnClientConnected(ulong id)
     {
-        Debug.Log(NetworkManager.Singleton.ConnectedClients[id]);
+        Debug.Log(TanksNetworkManager.Singleton.ConnectedClients[id]);
     }
 
     public void ChangeWind()

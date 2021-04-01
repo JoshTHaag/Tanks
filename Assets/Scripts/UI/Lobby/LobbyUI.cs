@@ -6,9 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 using MLAPI;
-using MLAPI.NetworkedVar.Collections;
-//using Tanks.Networking;
-
+using MLAPI.NetworkVariable.Collections;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -16,6 +14,8 @@ public class LobbyUI : MonoBehaviour
     public PlayerElement prefabPlayerElement;
   
     public List<PlayerElement> playerElements;
+
+    public bool IsInitialized { get; private set; }
 
     public static LobbyUI Instance { get; private set; }
 
@@ -41,20 +41,56 @@ public class LobbyUI : MonoBehaviour
     public void Init()
     {
         playerElements = new List<PlayerElement>();
-        NetworkManager.HostOnLobbyStartup = false;
         GameRoom.Instance.Players.OnListChanged += OnPlayerListChanged;
-        GetComponent<NetworkedObject>().Spawn();
-    }
 
-    void OnPlayerListChanged(NetworkedListEvent<Player> listEvent)
-    {
-        if(NetworkManager.Singleton.IsHost)
+        for(int x = 0; x < GameRoom.Instance.Players.Count; ++x)
         {
-            if(listEvent.eventType == NetworkedListEvent<Player>.EventType.Add)
+            PlayerElement newPlayer = null;
+            for (int y = 0; y < playerElements.Count; ++y)
+            {
+                if(playerElements[y].player == GameRoom.Instance.Players[x])
+                {
+                    newPlayer = playerElements[y];
+                    break;
+                }
+            }
+
+            if(newPlayer == null)
             {
                 var playerElement = Instantiate(prefabPlayerElement);
-                playerElement.Spawn(listEvent.value.id);
+                playerElement.Init(GameRoom.Instance.Players[x]);
             }
+        }
+    }
+
+    void OnPlayerListChanged(NetworkListEvent<Player> listEvent)
+    {
+        if (listEvent.Type == NetworkListEvent<Player>.EventType.Add)
+        {
+            Player newPlayer = null;
+            foreach (var p in GameRoom.Instance.Players)
+            {
+                if (p.id == listEvent.Value.id)
+                {
+                    newPlayer = listEvent.Value;
+                }
+            }
+
+            if (playerElements.Find(x => x.player == newPlayer))
+                return;
+
+            var playerElement = Instantiate(prefabPlayerElement);
+            playerElement.Init(newPlayer);
+        }
+        else if (listEvent.Type == NetworkListEvent<Player>.EventType.Remove)
+        {
+            var removeElement = playerElements.Find(x => x.player.id == listEvent.Value.id);
+
+            if (!removeElement)
+                return;
+
+            removeElement.Destroy();
+            playerElements.Remove(removeElement);
         }
     }
 

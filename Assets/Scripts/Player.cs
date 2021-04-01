@@ -7,7 +7,7 @@ using UnityEngine;
 using MLAPI.Serialization;
 
 [Serializable]
-public class Player : IBitWritable
+public class Player : AutoNetworkSerializable
 {
     public ulong id;
     public string name;
@@ -25,30 +25,30 @@ public class Player : IBitWritable
         return string.Format("ID: {0}, Name: {1}", id, name);
     }
 
-    public void Read(Stream stream)
-    {
-        byte[] buffer = new byte[sizeof(ulong)];
-        stream.Read(buffer, 0, buffer.Length);
-        id = BitConverter.ToUInt64(buffer, 0);
+    //public void Read(Stream stream)
+    //{
+    //    //byte[] buffer = new byte[sizeof(ulong)];
+    //    //stream.Read(buffer, 0, buffer.Length);
+    //    //id = BitConverter.ToUInt64(buffer, 0);
 
-        //BinaryFormatter bf = new BinaryFormatter();
-        //stream.Seek(0, SeekOrigin.Begin);
-        //try
-        //{
-        //    Player p = bf.Deserialize(stream) as Player;
+    //    BinaryFormatter bf = new BinaryFormatter();
+    //    stream.Seek(0, SeekOrigin.Begin);
+    //    try
+    //    {
+    //        Player p = bf.Deserialize(stream) as Player;
 
-        //    id = p.id;
-        //    name = p.name;
-        //}
-        //catch(Exception ex)
-        //{
-        //    Debug.LogError(ex);
-        //}
-    }
+    //        id = p.id;
+    //        name = p.name;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Debug.LogError(ex);
+    //    }
+    //}
 
-    public void Write(Stream stream)
-    {
-        BinaryFormatter bf = new BinaryFormatter();
-        bf.Serialize(stream, this);
-    }
+    //public void Write(Stream stream)
+    //{
+    //    BinaryFormatter bf = new BinaryFormatter();
+    //    bf.Serialize(stream, this);
+    //}
 }

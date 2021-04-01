@@ -6,7 +6,6 @@ using MLAPI;
 public class LobbyInitializer : MonoBehaviour
 {
     public GameRoom prefabGameRoom;
-    public LobbyUI prefabLobbyUI;
 
     public static LobbyInitializer Instance { get; private set; }
 
@@ -33,30 +32,24 @@ public class LobbyInitializer : MonoBehaviour
 
     public void Init()
     {
-        if (NetworkManager.HostOnLobbyStartup)
-            InitHost();
+        if(TanksNetworkManager.HostOnLobbyStartup)
+        {
+            TanksNetworkManager.Singleton.StartHost();
+
+            // Instantiate the GameRoom first to initialize the singleton.
+            var gameRoom = Instantiate(prefabGameRoom);
+
+            var lobbyUI = FindObjectOfType<LobbyUI>();
+
+            lobbyUI.Init();
+
+            gameRoom.Init();
+        }
         else
-            InitClient();
+        {
+            TanksNetworkManager.Singleton.StartClient();
+        }
 
-        NetworkManager.HostOnLobbyStartup = false;
-    }
-
-    void InitHost()
-    {
-        NetworkManager.Singleton.StartHost();
-
-        // Instantiate the GameRoom first to initialize the singleton.
-        var gameRoom = Instantiate(prefabGameRoom);
-
-        var lobbyUI = Instantiate(prefabLobbyUI);
-
-        lobbyUI.Init();
-
-        gameRoom.Init();
-    }
-
-    void InitClient()
-    {
-        NetworkManager.Singleton.StartClient();
+        TanksNetworkManager.HostOnLobbyStartup = false;
     }
 }

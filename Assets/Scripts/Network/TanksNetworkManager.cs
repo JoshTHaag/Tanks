@@ -4,7 +4,7 @@ using UnityEngine;
 using MLAPI;
 using UnityEngine.SceneManagement;
 
-public class NetworkManager : NetworkingManager
+public class TanksNetworkManager : NetworkManager
 {
     public static bool HostOnLobbyStartup = false;
 
@@ -24,14 +24,14 @@ public class NetworkManager : NetworkingManager
     [QFSW.QC.Command("start-host")]
     public static void CommandStartHost()
     {
-        NetworkManager.HostOnLobbyStartup = true;
+        TanksNetworkManager.HostOnLobbyStartup = true;
         SceneManager.LoadScene("LobbyScene");
     }
 
     [QFSW.QC.Command("start-client")]
     public static void CommandStartClient()
     {
-        NetworkManager.HostOnLobbyStartup = false;
+        TanksNetworkManager.HostOnLobbyStartup = false;
         SceneManager.LoadScene("LobbyScene");
     }
 

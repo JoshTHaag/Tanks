@@ -2,17 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using MLAPI;
-//using Tanks.Networking;
 using MLAPI;
-using MLAPI.NetworkedVar;
-using MLAPI.NetworkedVar.Collections;
+using MLAPI.NetworkVariable;
+using MLAPI.NetworkVariable.Collections;
 using MLAPI.Messaging;
 
-public class GameRoom : NetworkedBehaviour
+public class GameRoom : NetworkBehaviour
 {
-    public NetworkedList<Player> Players { get; private set; }
+    public NetworkList<Player> Players { get; private set; }
 
     public static GameRoom Instance { get; private set; }
+
+    public System.Action onSingletonInitialized = delegate { };
 
     private void Awake()
     {
@@ -27,13 +28,23 @@ public class GameRoom : NetworkedBehaviour
             return;
         }
 
-        Players = new NetworkedList<Player>();
+        if (Players == null)
+            Players = new NetworkList<Player>();
+
+        onSingletonInitialized();
     }
 
     private void Start()
     {
         if (Instance != this)
             return;
+
+        if(!IsHost)
+        {
+            var lobbyUI = FindObjectOfType<LobbyUI>();
+            if (lobbyUI && !lobbyUI.IsInitialized)
+                lobbyUI.Init();
+        }
     }
 
     private void OnDestroy()
@@ -44,14 +55,21 @@ public class GameRoom : NetworkedBehaviour
 
     private void Update()
     {
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            foreach(var p in Players)
+            {
+                Debug.Log(p);
+            }
+        }
     }
 
     public void Init()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += Host_ClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback += Host_ClientDisconnected;
-        GetComponent<NetworkedObject>().Spawn();
-        Host_ClientConnected(NetworkManager.Singleton.ServerClientId);
+        TanksNetworkManager.Singleton.OnClientConnectedCallback += Host_ClientConnected;
+        TanksNetworkManager.Singleton.OnClientDisconnectCallback += Host_ClientDisconnected;
+        GetComponent<NetworkObject>().Spawn();
+        Host_ClientConnected(TanksNetworkManager.Singleton.ServerClientId);
     }
 
     public void AddNewPlayer(ulong id)
@@ -68,20 +86,20 @@ public class GameRoom : NetworkedBehaviour
 
     void Host_ClientDisconnected(ulong id)
     {
-        Debug.Log("Host_ClientConnected: " + id);
+        Debug.Log("Host_ClientDisconnected: " + id);
 
         for(int i = 0; i < Players.Count; ++i)
         {
             if(Players[i].id == id)
             {
-                Players.RemoveAt(i);
+                Players.Remove(Players[i]);
                 break;
             }
         }
     }
 
-    [ServerRPC(RequireOwnership = false)]
-    public void CmdRequestNameChange(ulong id, string name)
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestNameChange_ServerRpc(ulong id, string name)
     {
         //var player = Players.Find(x => x.id == id);
         Player player = null;

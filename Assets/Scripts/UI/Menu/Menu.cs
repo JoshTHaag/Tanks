@@ -9,13 +9,13 @@ public class Menu : MonoBehaviour
 {
     public void Host()
     {
-        NetworkManager.HostOnLobbyStartup = true;
+        TanksNetworkManager.HostOnLobbyStartup = true;
         SceneManager.LoadScene("LobbyScene");
     }
 
     public void Connect()
     {
-        NetworkManager.HostOnLobbyStartup = false;
+        TanksNetworkManager.HostOnLobbyStartup = false;
         SceneManager.LoadScene("LobbyScene");
     }
 }
