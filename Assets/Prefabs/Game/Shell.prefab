@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 2343306982185155004}
+  maxLifeTime: 10
   force: {x: 0, y: 0}
 --- !u!114 &2458597682117789017
 MonoBehaviour:

@@ -16,14 +16,6 @@ public class PlayerTankController : MonoBehaviour
         SampleInput();
 
         tank.Drive(moveInput.x);
-
-        //tank.Aim(aimInput);
-
-        //if (fireHoldInput)
-        //    tank.ChargeFire();
-
-        //if(fireReleaseInput)
-        //    tank.Fire();
     }
 
     void SampleInput()

@@ -15,7 +15,7 @@ public class Explosive : MonoBehaviour
         {
             Vector2D pos = new Vector2D(transform.position);
 
-            Polygon2D.defaultCircleVerticesCount = Mathf.Clamp((int)(16 * explosiveness), 16, 128);
+            Polygon2D.defaultCircleVerticesCount = Mathf.Clamp((int)(24 * explosiveness), 8, 64);
 
             Polygon2D slicePolygon = Polygon2D.Create(Polygon2D.PolygonType.Circle, explosiveness);
             Polygon2D slicePolygonDestroy = Polygon2D.Create(Polygon2D.PolygonType.Circle, explosiveness + 0.5f);

@@ -29,7 +29,8 @@ public class Tank : MonoBehaviour
 
     private void Awake()
     {
-
+        Collider2D bodyCollider = GetComponent<Collider2D>();
+        rb.centerOfMass = rb.centerOfMass - (Vector2.up * bodyCollider.bounds.extents);
     }
 
     private void Update()
@@ -81,45 +82,6 @@ public class Tank : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        Gizmos.DrawWireSphere(transform.position + (Vector3)rb.centerOfMass, 0.1f);
     }
 }
-
-
-//float fireChargeTimestamp;
-//bool isFireCharging = false;
-
-//public void Aim(Vector2 targetPosition)
-//{
-//    Vector2 targetVector = (targetPosition - (Vector2)transform.position).normalized;
-//    float rotation = Mathf.Atan2(targetVector.y, targetVector.x) * Mathf.Rad2Deg;
-//    if (rotation < -90f) rotation = 180f;
-//    else if (rotation < 0f) rotation = 0f;
-//    turretPivot.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
-//}
-
-
-//public void Fire()
-//{
-//    if (!isFireCharging)
-//    {
-//        fireChargeTimestamp = Time.time;
-//    }
-//    else
-//    {
-//        isFireCharging = false;
-//    }
-
-//    Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
-//    float force = Mathf.Clamp(((Time.time - fireChargeTimestamp) * chargeForcePerSecond), minFireForce, maxFireForce);
-//    proj.force = proj.transform.right * force;
-//}
-
-
-//public void ChargeFire()
-//{
-//    if (!isFireCharging)
-//    {
-//        isFireCharging = true;
-//        fireChargeTimestamp = Time.time;
-//    }
-//}
