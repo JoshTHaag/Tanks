@@ -6,10 +6,12 @@ using MLAPI;
 using MLAPI.NetworkVariable;
 using MLAPI.NetworkVariable.Collections;
 using MLAPI.Messaging;
+using Tanks.Networking;
+using UnityEngine.SceneManagement;
 
 public class GameRoom : NetworkBehaviour
 {
-    public NetworkList<Player> Players { get; private set; }
+    public NetworkListEx<Player> Players { get; private set; }
 
     public static GameRoom Instance { get; private set; }
 
@@ -29,7 +31,7 @@ public class GameRoom : NetworkBehaviour
         }
 
         if (Players == null)
-            Players = new NetworkList<Player>();
+            Players = new NetworkListEx<Player>();
 
         onSingletonInitialized();
     }
@@ -41,9 +43,7 @@ public class GameRoom : NetworkBehaviour
 
         if(!IsHost)
         {
-            var lobbyUI = FindObjectOfType<LobbyUI>();
-            if (lobbyUI && !lobbyUI.IsInitialized)
-                lobbyUI.Init();
+            ClientInit();
         }
     }
 
@@ -64,12 +64,19 @@ public class GameRoom : NetworkBehaviour
         }
     }
 
-    public void Init()
+    public void HostInit()
     {
         TanksNetworkManager.Singleton.OnClientConnectedCallback += Host_ClientConnected;
         TanksNetworkManager.Singleton.OnClientDisconnectCallback += Host_ClientDisconnected;
         GetComponent<NetworkObject>().Spawn();
         Host_ClientConnected(TanksNetworkManager.Singleton.ServerClientId);
+    }
+
+    public void ClientInit()
+    {
+        var lobbyUI = FindObjectOfType<LobbyUI>();
+        if (lobbyUI && !lobbyUI.IsInitialized)
+            lobbyUI.Init();
     }
 
     public void AddNewPlayer(ulong id)
@@ -88,24 +95,18 @@ public class GameRoom : NetworkBehaviour
     {
         Debug.Log("Host_ClientDisconnected: " + id);
 
-        for(int i = 0; i < Players.Count; ++i)
+        var disconnectedPlayer = Players.Find(x => x.id == id);
+        if(disconnectedPlayer)
         {
-            if(Players[i].id == id)
-            {
-                Players.Remove(Players[i]);
-                break;
-            }
+            Players.Remove(disconnectedPlayer);
         }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void RequestNameChange_ServerRpc(ulong id, string name)
     {
-        //var player = Players.Find(x => x.id == id);
-        Player player = null;
-        foreach (var p in Players)
-            if (p.id == id)
-                player = p;
+        var player = Players.Find(x => x.id == id);
 
         if (player == null)
         {

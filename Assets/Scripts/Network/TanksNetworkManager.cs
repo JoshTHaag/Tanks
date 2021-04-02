@@ -15,7 +15,7 @@ public class TanksNetworkManager : NetworkManager
 
     void OnDisconnect(ulong id)
     {
-        if(!IsHost)
+        if(id == LocalClientId)
         {
             SceneManager.LoadScene("MenuScene");
         }
@@ -42,5 +42,7 @@ public class TanksNetworkManager : NetworkManager
             Singleton.StopHost();
         else if (Singleton.IsClient)
             Singleton.StopClient();
+
+        SceneManager.LoadScene("MenuScene");
     }
 }

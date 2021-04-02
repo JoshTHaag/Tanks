@@ -25,6 +25,11 @@ public class Player : AutoNetworkSerializable
         return string.Format("ID: {0}, Name: {1}", id, name);
     }
 
+    public static implicit operator bool(Player obj)
+    {
+        return obj != null;
+    }
+
     //public void Read(Stream stream)
     //{
     //    //byte[] buffer = new byte[sizeof(ulong)];

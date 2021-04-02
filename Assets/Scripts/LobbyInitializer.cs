@@ -43,7 +43,7 @@ public class LobbyInitializer : MonoBehaviour
 
             lobbyUI.Init();
 
-            gameRoom.Init();
+            gameRoom.HostInit();
         }
         else
         {

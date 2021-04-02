@@ -67,24 +67,18 @@ public class LobbyUI : MonoBehaviour
     {
         if (listEvent.Type == NetworkListEvent<Player>.EventType.Add)
         {
-            Player newPlayer = null;
-            foreach (var p in GameRoom.Instance.Players)
-            {
-                if (p.id == listEvent.Value.id)
-                {
-                    newPlayer = listEvent.Value;
-                }
-            }
+            Player newPlayer = GameRoom.Instance.Players.Find(x => x == listEvent.Value);
 
             if (playerElements.Find(x => x.player == newPlayer))
                 return;
 
             var playerElement = Instantiate(prefabPlayerElement);
+            playerElements.Add(playerElement);
             playerElement.Init(newPlayer);
         }
         else if (listEvent.Type == NetworkListEvent<Player>.EventType.Remove)
         {
-            var removeElement = playerElements.Find(x => x.player.id == listEvent.Value.id);
+            var removeElement = playerElements.Find(x => x.player == listEvent.Value);
 
             if (!removeElement)
                 return;
