@@ -10,6 +10,8 @@ public class PlayerElement : MonoBehaviour, IPointerDownHandler, IPointerUpHandl
     public TMP_InputField nameInputField;
 
     public Player player;
+
+    bool isLocalPlayer = false;
     
     void Awake()
     {
@@ -19,21 +21,25 @@ public class PlayerElement : MonoBehaviour, IPointerDownHandler, IPointerUpHandl
     public void Init(Player player)
     {
         this.player = player;
+        isLocalPlayer = player.Id == TanksNetworkManager.Singleton.LocalClientId;
         transform.SetParent(LobbyUI.Instance.playerListContent);
-        nameInputField.textComponent.SetText(player.name);
+        nameInputField.textComponent.SetText(player.Name);
+
+        //if (!isLocalPlayer)
+        //    nameInputField.DeactivateInputField(false);
     }
 
     void LateUpdate()
     {
         if (!nameInputField.isFocused)
-            nameInputField.text = player.name;
+            nameInputField.text = player.Name;
     }
 
     void OnEndEditName(string newName)
     {
-        if(newName != player.name)
+        if(newName != player.Name)
         {
-            GameRoom.Instance.RequestNameChange_ServerRpc(player.id, newName);
+            GameRoom.Instance.RequestNameChange_ServerRpc(player.Id, newName);
         }
     }
 

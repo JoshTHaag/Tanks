@@ -4,12 +4,12 @@ using System.IO;
 using System.Reflection;
 using MLAPI;
 using MLAPI.NetworkVariable;
-using MLAPI.NetworkVariable.Collections;
+//using MLAPI.NetworkVariable.Collections;
 using MLAPI.Serialization.Pooled;
 
 namespace Tanks.Networking
 {
-    public class NetworkListEx<T> : IList<T>, ICollection<T>, IEnumerable<T>, IEnumerable, INetworkVariable
+    public class NetworkListEx<T> : IList<T>, ICollection<T>, IEnumerable<T>, IEnumerable, INetworkVariable where T : NetworkListExElement
     {
         /// <summary>
         /// Gets the last time the variable was synced
@@ -24,7 +24,7 @@ namespace Tanks.Networking
         public readonly NetworkVariableSettings Settings = new NetworkVariableSettings();
 
         private readonly IList<T> m_List = new List<T>();
-        private readonly List<NetworkListEvent<T>> m_DirtyEvents = new List<NetworkListEvent<T>>();
+        private readonly List<NetworkListExEvent<T>> m_DirtyEvents = new List<NetworkListExEvent<T>>();
         private NetworkBehaviour m_NetworkBehaviour;
 
         /// <summary>
@@ -70,14 +70,21 @@ namespace Tanks.Networking
             set
             {
                 if (NetworkManager.Singleton.IsServer)
-                    m_List[index] = value;
-
-                HandleAddListEvent(new NetworkListEvent<T>()
                 {
-                    Type = NetworkListEvent<T>.EventType.Value,
-                    Value = value,
-                    Index = index
-                });
+                    if(m_List[index] != value)
+                    {
+                        value.ElementChanged += OnElementChanged;
+
+                        m_List[index] = value;
+
+                        HandleAddListEvent(new NetworkListExEvent<T>()
+                        {
+                            Type = NetworkListExEvent<T>.EventType.Value,
+                            Value = value,
+                            Index = index
+                        });
+                    }
+                }
             }
         }
 
@@ -98,11 +105,25 @@ namespace Tanks.Networking
         {
             m_List.Add(item);
 
-            HandleAddListEvent(new NetworkListEvent<T>()
+            item.ElementChanged += OnElementChanged;
+
+            HandleAddListEvent(new NetworkListExEvent<T>()
             {
-                Type = NetworkListEvent<T>.EventType.Add,
+                Type = NetworkListExEvent<T>.EventType.Add,
                 Value = item,
                 Index = m_List.Count - 1
+            });
+        }
+
+        void OnElementChanged(NetworkListExElement element)
+        {
+            int index = m_List.IndexOf(element as T);
+
+            HandleAddListEvent(new NetworkListExEvent<T>()
+            {
+                Type = NetworkListExEvent<T>.EventType.ElementChanged,
+                Value = element as T,
+                Index = index
             });
         }
 
@@ -124,9 +145,9 @@ namespace Tanks.Networking
         {
             if (NetworkManager.Singleton.IsServer) m_List.Clear();
 
-            NetworkListEvent<T> listEvent = new NetworkListEvent<T>()
+            NetworkListExEvent<T> listEvent = new NetworkListExEvent<T>()
             {
-                Type = NetworkListEvent<T>.EventType.Clear
+                Type = NetworkListExEvent<T>.EventType.Clear
             };
 
             HandleAddListEvent(listEvent);
@@ -161,9 +182,11 @@ namespace Tanks.Networking
         {
             if (NetworkManager.Singleton.IsServer) m_List.Insert(index, item);
 
-            NetworkListEvent<T> listEvent = new NetworkListEvent<T>()
+            item.ElementChanged += OnElementChanged;
+
+            NetworkListExEvent<T> listEvent = new NetworkListExEvent<T>()
             {
-                Type = NetworkListEvent<T>.EventType.Insert,
+                Type = NetworkListExEvent<T>.EventType.Insert,
                 Index = index,
                 Value = item
             };
@@ -187,9 +210,9 @@ namespace Tanks.Networking
 
             if (removed)
             {
-                NetworkListEvent<T> listEvent = new NetworkListEvent<T>()
+                NetworkListExEvent<T> listEvent = new NetworkListExEvent<T>()
                 {
-                    Type = NetworkListEvent<T>.EventType.Remove,
+                    Type = NetworkListExEvent<T>.EventType.Remove,
                     Value = item
                 };
 
@@ -203,9 +226,9 @@ namespace Tanks.Networking
         {
             if (NetworkManager.Singleton.IsServer) m_List.RemoveAt(index);
 
-            NetworkListEvent<T> listEvent = new NetworkListEvent<T>()
+            NetworkListExEvent<T> listEvent = new NetworkListExEvent<T>()
             {
-                Type = NetworkListEvent<T>.EventType.RemoveAt,
+                Type = NetworkListExEvent<T>.EventType.RemoveAt,
                 Index = index
             };
 
@@ -233,36 +256,43 @@ namespace Tanks.Networking
                     writer.WriteBits((byte)m_DirtyEvents[i].Type, 3);
                     switch (m_DirtyEvents[i].Type)
                     {
-                        case NetworkListEvent<T>.EventType.Add:
+                        case NetworkListExEvent<T>.EventType.Add:
                             {
                                 writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Insert:
+                        case NetworkListExEvent<T>.EventType.Insert:
                             {
                                 writer.WriteInt32Packed(m_DirtyEvents[i].Index);
                                 writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Remove:
+                        case NetworkListExEvent<T>.EventType.Remove:
                             {
                                 writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.RemoveAt:
+                        case NetworkListExEvent<T>.EventType.RemoveAt:
                             {
                                 writer.WriteInt32Packed(m_DirtyEvents[i].Index);
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Value:
+                        case NetworkListExEvent<T>.EventType.Value:
                             {
                                 writer.WriteInt32Packed(m_DirtyEvents[i].Index);
                                 writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Clear:
+                        case NetworkListExEvent<T>.EventType.Clear:
                             {
                                 //Nothing has to be written
+                            }
+                            break;
+                        case NetworkListExEvent<T>.EventType.ElementChanged:
+                            {
+                                writer.WriteInt32Packed(m_DirtyEvents[i].Index);
+                                //writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
+                                m_List[m_DirtyEvents[i].Index].Write(writer);
                             }
                             break;
                     }
@@ -287,7 +317,7 @@ namespace Tanks.Networking
             return m_List.GetEnumerator();
         }
 
-        private void HandleAddListEvent(NetworkListEvent<T> listEvent)
+        private void HandleAddListEvent(NetworkListExEvent<T> listEvent)
         {
             if (NetworkManager.Singleton.IsServer)
             {
@@ -335,16 +365,16 @@ namespace Tanks.Networking
                 ushort deltaCount = reader.ReadUInt16Packed();
                 for (int i = 0; i < deltaCount; i++)
                 {
-                    NetworkListEvent<T>.EventType eventType = (NetworkListEvent<T>.EventType)reader.ReadBits(3);
+                    NetworkListExEvent<T>.EventType eventType = (NetworkListExEvent<T>.EventType)reader.ReadBits(3);
                     switch (eventType)
                     {
-                        case NetworkListEvent<T>.EventType.Add:
+                        case NetworkListExEvent<T>.EventType.Add:
                             {
                                 m_List.Add((T)reader.ReadObjectPacked(typeof(T))); //BOX
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                         Index = m_List.Count - 1,
@@ -354,7 +384,7 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType,
                                         Index = m_List.Count - 1,
@@ -363,14 +393,14 @@ namespace Tanks.Networking
                                 }
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Insert:
+                        case NetworkListExEvent<T>.EventType.Insert:
                             {
                                 int index = reader.ReadInt32Packed();
                                 m_List.Insert(index, (T)reader.ReadObjectPacked(typeof(T))); //BOX
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -380,7 +410,7 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -389,7 +419,7 @@ namespace Tanks.Networking
                                 }
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Remove:
+                        case NetworkListExEvent<T>.EventType.Remove:
                             {
                                 T value = (T)reader.ReadObjectPacked(typeof(T)); //BOX
                                 int index = m_List.IndexOf(value);
@@ -397,7 +427,7 @@ namespace Tanks.Networking
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -407,7 +437,7 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -416,7 +446,7 @@ namespace Tanks.Networking
                                 }
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.RemoveAt:
+                        case NetworkListExEvent<T>.EventType.RemoveAt:
                             {
                                 int index = reader.ReadInt32Packed();
                                 T value = m_List[index];
@@ -424,7 +454,7 @@ namespace Tanks.Networking
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -434,7 +464,7 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -443,7 +473,7 @@ namespace Tanks.Networking
                                 }
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Value:
+                        case NetworkListExEvent<T>.EventType.Value:
                             {
                                 int index = reader.ReadInt32Packed();
                                 T value = (T)reader.ReadObjectPacked(typeof(T)); //BOX
@@ -451,7 +481,7 @@ namespace Tanks.Networking
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -461,7 +491,7 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType,
                                         Index = index,
@@ -470,14 +500,14 @@ namespace Tanks.Networking
                                 }
                             }
                             break;
-                        case NetworkListEvent<T>.EventType.Clear:
+                        case NetworkListExEvent<T>.EventType.Clear:
                             {
                                 //Read nothing
                                 m_List.Clear();
 
                                 if (OnListChanged != null)
                                 {
-                                    OnListChanged(new NetworkListEvent<T>
+                                    OnListChanged(new NetworkListExEvent<T>
                                     {
                                         Type = eventType,
                                     });
@@ -485,11 +515,42 @@ namespace Tanks.Networking
 
                                 if (keepDirtyDelta)
                                 {
-                                    m_DirtyEvents.Add(new NetworkListEvent<T>()
+                                    m_DirtyEvents.Add(new NetworkListExEvent<T>()
                                     {
                                         Type = eventType
                                     });
                                 }
+                            }
+                            break;
+                        case NetworkListExEvent<T>.EventType.ElementChanged:
+                            {
+                                int index = reader.ReadInt32Packed();
+                                //T value = (T)reader.ReadObjectPacked(typeof(T)); //BOX
+                                if (index < m_List.Count)
+                                {
+                                    m_List[index].Read(reader);
+
+                                    if (OnListChanged != null)
+                                    {
+                                        OnListChanged(new NetworkListExEvent<T>
+                                        {
+                                            Type = eventType,
+                                            Index = index,
+                                            Value = m_List[index]
+                                        });
+                                    }
+
+                                    if (keepDirtyDelta)
+                                    {
+                                        m_DirtyEvents.Add(new NetworkListExEvent<T>()
+                                        {
+                                            Type = eventType,
+                                            Index = index,
+                                            Value = m_List[index]
+                                        });
+                                    }
+                                }
+
                             }
                             break;
                     }
@@ -497,6 +558,6 @@ namespace Tanks.Networking
             }
         }
 
-        public delegate void OnListChangedDelegate(NetworkListEvent<T> changeEvent);
+        public delegate void OnListChangedDelegate(NetworkListExEvent<T> changeEvent);
     }
 }

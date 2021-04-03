@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 using MLAPI;
-using MLAPI.NetworkVariable.Collections;
+using Tanks.Networking;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -63,11 +63,15 @@ public class LobbyUI : MonoBehaviour
         }
     }
 
-    void OnPlayerListChanged(NetworkListEvent<Player> listEvent)
+    void OnPlayerListChanged(NetworkListExEvent<Player> listEvent)
     {
-        if (listEvent.Type == NetworkListEvent<Player>.EventType.Add)
+        if (listEvent.Type == NetworkListExEvent<Player>.EventType.Add)
         {
             Player newPlayer = GameRoom.Instance.Players.Find(x => x == listEvent.Value);
+            //Player newPlayer = null;
+            //foreach (var p in GameRoom.Instance.Players)
+            //    if (p == listEvent.Value)
+            //        newPlayer = p;
 
             if (playerElements.Find(x => x.player == newPlayer))
                 return;
@@ -76,7 +80,7 @@ public class LobbyUI : MonoBehaviour
             playerElements.Add(playerElement);
             playerElement.Init(newPlayer);
         }
-        else if (listEvent.Type == NetworkListEvent<Player>.EventType.Remove)
+        else if (listEvent.Type == NetworkListExEvent<Player>.EventType.Remove)
         {
             var removeElement = playerElements.Find(x => x.player == listEvent.Value);
 
@@ -85,6 +89,10 @@ public class LobbyUI : MonoBehaviour
 
             removeElement.Destroy();
             playerElements.Remove(removeElement);
+        }
+        else if (listEvent.Type == NetworkListExEvent<Player>.EventType.Value)
+        {
+            Debug.Log("value change: " + listEvent.Value);
         }
     }
 

@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using MLAPI;
-using MLAPI;
 using MLAPI.NetworkVariable;
 using MLAPI.NetworkVariable.Collections;
 using MLAPI.Messaging;
@@ -95,8 +94,13 @@ public class GameRoom : NetworkBehaviour
     {
         Debug.Log("Host_ClientDisconnected: " + id);
 
-        var disconnectedPlayer = Players.Find(x => x.id == id);
-        if(disconnectedPlayer)
+        var disconnectedPlayer = Players.Find(x => x.Id == id);
+        //Player disconnectedPlayer = null;
+        //foreach (var p in Players)
+        //    if (p.id == id)
+        //        disconnectedPlayer = p;
+
+        if (disconnectedPlayer)
         {
             Players.Remove(disconnectedPlayer);
         }
@@ -106,7 +110,7 @@ public class GameRoom : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestNameChange_ServerRpc(ulong id, string name)
     {
-        var player = Players.Find(x => x.id == id);
+        var player = Players.Find(x => x.Id == id);
 
         if (player == null)
         {
@@ -114,8 +118,8 @@ public class GameRoom : NetworkBehaviour
             return;
         }
 
-        if (player.name != name)
-            player.name = name;
+        if (player.Name != name)
+            player.Name = name;
     }
 
     [QFSW.QC.Command("log-players")]
