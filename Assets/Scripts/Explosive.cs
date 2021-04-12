@@ -11,6 +11,9 @@ public class Explosive : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (!TanksNetworkManager.Singleton.IsHost)
+            return;
+
         if (collision.collider.name.Contains("Terrain"))
         {
             Vector2D pos = new Vector2D(transform.position);
@@ -51,6 +54,15 @@ public class Explosive : MonoBehaviour
             Destroy(gameObject);
 
             Polygon2D.defaultCircleVerticesCount = 25;
+
+            //PolygonCollider2D collider = collision.collider as PolygonCollider2D;
+            //Vector2[][] paths = new Vector2[collider.pathCount][];
+            //for(int i = 0; i < collider.pathCount; ++i)
+            //{
+            //    paths[i] = collider.GetPath(i);
+            //}
+
+            //collision.collider.GetComponent<Terrain>().TerrainSliced_ClientRpc(paths);
         }
     }
 }

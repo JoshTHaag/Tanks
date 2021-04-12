@@ -1,10 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using MLAPI;
 using MLAPI.NetworkVariable;
-//using MLAPI.NetworkVariable.Collections;
 using MLAPI.Serialization.Pooled;
 
 namespace Tanks.Networking
@@ -206,14 +204,23 @@ namespace Tanks.Networking
         public bool Remove(T item)
         {
             bool removed = false;
-            if (NetworkManager.Singleton.IsServer) removed = m_List.Remove(item);
+
+            int index = m_List.IndexOf(item);
+
+            if (NetworkManager.Singleton.IsServer)
+            {
+                removed = index != -1;
+                if(removed)
+                    m_List.RemoveAt(index);
+            }
 
             if (removed)
             {
                 NetworkListExEvent<T> listEvent = new NetworkListExEvent<T>()
                 {
                     Type = NetworkListExEvent<T>.EventType.Remove,
-                    Value = item
+                    Value = item,
+                    Index = index
                 };
 
                 HandleAddListEvent(listEvent);
@@ -269,6 +276,7 @@ namespace Tanks.Networking
                             break;
                         case NetworkListExEvent<T>.EventType.Remove:
                             {
+                                writer.WriteObjectPacked(m_DirtyEvents[i].Index); //BOX
                                 writer.WriteObjectPacked(m_DirtyEvents[i].Value); //BOX
                             }
                             break;
@@ -421,8 +429,8 @@ namespace Tanks.Networking
                             break;
                         case NetworkListExEvent<T>.EventType.Remove:
                             {
-                                T value = (T)reader.ReadObjectPacked(typeof(T)); //BOX
-                                int index = m_List.IndexOf(value);
+                                int index = reader.ReadInt32Packed();
+                                var value = m_List[index];
                                 m_List.RemoveAt(index);
 
                                 if (OnListChanged != null)
@@ -525,7 +533,7 @@ namespace Tanks.Networking
                         case NetworkListExEvent<T>.EventType.ElementChanged:
                             {
                                 int index = reader.ReadInt32Packed();
-                                //T value = (T)reader.ReadObjectPacked(typeof(T)); //BOX
+                                
                                 if (index < m_List.Count)
                                 {
                                     m_List[index].Read(reader);

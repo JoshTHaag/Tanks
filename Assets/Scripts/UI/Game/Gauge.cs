@@ -29,10 +29,14 @@ public class Gauge : MonoBehaviour
 
     private void Start()
     {
-        SetTank(FindObjectOfType<Tank>());
+        if(FindObjectOfType<Tank>())
+            SetTank(FindObjectOfType<Tank>());
 
-        SetValFromIndicator();
-        UpdateText();
+        if(tank)
+        {
+            SetValFromIndicator();
+            UpdateText();
+        }
     }
 
     public void IndicatorSelected()

@@ -40,20 +40,21 @@ public class WindMeter : MonoBehaviour
 
     private void Start()
     {
-        GameManager.Instance.OnWindChanged.AddListener(OnWindChanged);
+        GameManager.Instance.Wind.OnValueChanged += OnWindChanged;
+        //GameManager.Instance.OnWindChanged.AddListener(OnWindChanged);
 
-        OnWindChanged(GameManager.Instance.Wind);
+        OnWindChanged(0f, GameManager.Instance.Wind.Value);
     }
 
-    public void OnWindChanged(float wind)
+    public void OnWindChanged(float previousWind, float newWind)
     {
         // Set text.
-        string text = Mathf.Abs(wind).ToString("#");
+        string text = Mathf.Abs(newWind).ToString("#");
         if (text == "")
             text = "0";
         windText.SetText(text);
 
-        float percent = Mathf.Abs(wind) / referenceWindMax;
+        float percent = Mathf.Abs(newWind) / referenceWindMax;
 
         // Set wind symbol size.
         float size = Mathf.Clamp(maxSymbolSize * percent, minSymbolSize, maxSymbolSize);
@@ -61,13 +62,13 @@ public class WindMeter : MonoBehaviour
 
         // Set arrow size and direction.
         size = Mathf.Clamp(maxArrowSize * percent, minArrowSize, maxArrowSize);
-        if (wind <= -1f)
+        if (newWind <= -1f)
         {
             leftArrow.enabled = true;
             rightArrow.enabled = false;
             leftArrow.rectTransform.sizeDelta = new Vector2(size, leftArrow.rectTransform.sizeDelta.y);
         }
-        else if(wind >= 1f)
+        else if(newWind >= 1f)
         {
             rightArrow.enabled = true;
             leftArrow.enabled = false;

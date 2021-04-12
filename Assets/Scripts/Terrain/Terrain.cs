@@ -1,4 +1,6 @@
 using UnityEngine;
+using MLAPI;
+using MLAPI.Messaging;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -8,7 +10,7 @@ using UnityEditor;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class Terrain : MonoBehaviour
+public class Terrain : NetworkBehaviour
 {
     public string sortingLayerName;
     public int sortingOrder;
@@ -20,6 +22,26 @@ public class Terrain : MonoBehaviour
         collider = gameObject.GetComponent<PolygonCollider2D>();
 
         GenerateMesh();
+    }
+
+    [ClientRpc]
+    public void TerrainSliced_ClientRpc(Vector2[][] newPaths)
+    {
+        Debug.LogError("TerrainSliced_ServerRpc");
+
+        //int maxPaths = Mathf.Max(collider.pathCount, newPaths.Length);
+
+        //for(int i = 0; i < maxPaths; ++i)
+        //{
+        //    if(i < newPaths.Length)
+        //    {
+        //        collider.SetPath(i, newPaths[i]);
+        //    }
+        //    else
+        //    {
+        //        collider.SetPath(i, new Vector2[0]);
+        //    }
+        //}
     }
 
 #if UNITY_EDITOR
@@ -40,28 +62,6 @@ public class Terrain : MonoBehaviour
     void GenerateMesh()
     {
         MeshFilter mf = GetComponent<MeshFilter>();
-
-        //int pointCount = collider.GetTotalPointCount();
-
-        //Mesh mesh = new Mesh();
-        //mesh.name = "Generated Mesh - " + gameObject.name;
-
-        //Vector2[] points = collider.points;
-        //Vector3[] vertices = new Vector3[pointCount];
-        //Vector2[] uv = new Vector2[pointCount];
-
-        //for (int j = 0; j < pointCount; j++)
-        //{
-        //    Vector2 actual = points[j];
-        //    vertices[j] = new Vector3(actual.x, actual.y, 0);
-        //    uv[j] = actual;
-        //}
-
-        //Triangulator tr = new Triangulator(points);
-        //int[] triangles = tr.Triangulate();
-        //mesh.vertices = vertices;
-        //mesh.triangles = triangles;
-        //mesh.uv = uv;
 
         Mesh mesh = collider.CreateMesh(false, false);
 

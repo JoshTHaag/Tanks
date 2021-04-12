@@ -12,7 +12,9 @@ public class LobbyUI : MonoBehaviour
 {
     public Transform playerListContent;
     public PlayerElement prefabPlayerElement;
-  
+    public Button startButton;
+    public Button readyButton;
+
     public List<PlayerElement> playerElements;
 
     public bool IsInitialized { get; private set; }
@@ -43,21 +45,34 @@ public class LobbyUI : MonoBehaviour
         playerElements = new List<PlayerElement>();
         GameRoom.Instance.Players.OnListChanged += OnPlayerListChanged;
 
-        for(int x = 0; x < GameRoom.Instance.Players.Count; ++x)
+        if(TanksNetworkManager.Singleton.IsHost)
         {
-            PlayerElement newPlayer = null;
+            startButton.gameObject.SetActive(true);
+            startButton.interactable = false;
+            readyButton.gameObject.SetActive(false);
+        }
+        else
+        {
+            readyButton.gameObject.SetActive(true);
+            startButton.gameObject.SetActive(false);
+        }
+
+        for (int x = 0; x < GameRoom.Instance.Players.Count; ++x)
+        {
+            PlayerElement newPlayerElement = null;
             for (int y = 0; y < playerElements.Count; ++y)
             {
-                if(playerElements[y].player == GameRoom.Instance.Players[x])
+                if (playerElements[y].player == GameRoom.Instance.Players[x])
                 {
-                    newPlayer = playerElements[y];
+                    newPlayerElement = playerElements[y];
                     break;
                 }
             }
 
-            if(newPlayer == null)
+            if (newPlayerElement == null)
             {
                 var playerElement = Instantiate(prefabPlayerElement);
+                playerElements.Add(playerElement);
                 playerElement.Init(GameRoom.Instance.Players[x]);
             }
         }
@@ -67,11 +82,12 @@ public class LobbyUI : MonoBehaviour
     {
         if (listEvent.Type == NetworkListExEvent<Player>.EventType.Add)
         {
-            Player newPlayer = GameRoom.Instance.Players.Find(x => x == listEvent.Value);
-            //Player newPlayer = null;
-            //foreach (var p in GameRoom.Instance.Players)
-            //    if (p == listEvent.Value)
-            //        newPlayer = p;
+            Player newPlayer = listEvent.Value;
+            newPlayer.IsHost = newPlayer.Id == TanksNetworkManager.Singleton.ServerClientId;
+            if(newPlayer.IsHost)
+            {
+                newPlayer.IsReady = true;
+            }
 
             if (playerElements.Find(x => x.player == newPlayer))
                 return;
@@ -79,6 +95,11 @@ public class LobbyUI : MonoBehaviour
             var playerElement = Instantiate(prefabPlayerElement);
             playerElements.Add(playerElement);
             playerElement.Init(newPlayer);
+
+            if(TanksNetworkManager.Singleton.IsHost)
+            {
+                startButton.interactable = GetAreAllPlayersReady();
+            }
         }
         else if (listEvent.Type == NetworkListExEvent<Player>.EventType.Remove)
         {
@@ -93,6 +114,51 @@ public class LobbyUI : MonoBehaviour
         else if (listEvent.Type == NetworkListExEvent<Player>.EventType.Value)
         {
             Debug.Log("value change: " + listEvent.Value);
+
+            if(TanksNetworkManager.Singleton.IsHost)
+            {
+                startButton.interactable = GetAreAllPlayersReady();
+            }
+        }
+        else if(listEvent.Type == NetworkListExEvent<Player>.EventType.ElementChanged)
+        {
+            if (TanksNetworkManager.Singleton.IsHost)
+            {
+                startButton.interactable = GetAreAllPlayersReady();
+            }
+
+            if (listEvent.Value.Id == TanksNetworkManager.Singleton.LocalClientId)
+            {
+                if (listEvent.Value.IsReady)
+                    readyButton.GetComponentInChildren<TextMeshProUGUI>().SetText("UNREADY");
+                else
+                    readyButton.GetComponentInChildren<TextMeshProUGUI>().SetText("READY");
+            }
+        }
+    }
+
+    public void StartGame()
+    {
+        if (!GetAreAllPlayersReady())
+            return;
+
+        StartCoroutine(DelayUnready());
+
+        GameRoom.Instance.StartGame();
+    }
+
+    public void Ready()
+    {
+        GameRoom.Instance.PlayerReady_ServerRpc();
+    }
+
+    IEnumerator DelayUnready()
+    {
+        yield return new WaitForEndOfFrame();
+
+        for (int i = 0; i < GameRoom.Instance.Players.Count; ++i)
+        {
+            GameRoom.Instance.Players[i].IsReady = false;
         }
     }
 
@@ -100,10 +166,26 @@ public class LobbyUI : MonoBehaviour
     {
         if (Instance != this)
             return;
+
+        Instance = null;
     }
 
     private void LateUpdate()
     {
-        
+        if (Instance != this)
+            return;
+    }
+
+    public bool GetAreAllPlayersReady()
+    {
+        for (int i = 0; i < GameRoom.Instance.Players.Count; ++i)
+        {
+            if (!GameRoom.Instance.Players[i].IsReady)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

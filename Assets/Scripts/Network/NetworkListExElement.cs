@@ -13,8 +13,6 @@ public abstract class NetworkListExElement : INetworkSerializable
 
     public virtual void OnElementChanged(NetworkListExElement changedElement)
     {
-        UnityEngine.Networking.NetworkTransport.QueueMessageForSending(0, 0, 0, null, 0, out byte error);
-
         ElementChanged?.Invoke(changedElement);
     }
 

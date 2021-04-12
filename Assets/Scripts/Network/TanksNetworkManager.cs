@@ -8,16 +8,42 @@ public class TanksNetworkManager : NetworkManager
 {
     public static bool HostOnLobbyStartup = false;
 
+    bool isStarted = false;
+    bool prevIsStarted = false;
+
     private void Awake()
     {
         OnClientDisconnectCallback += OnDisconnect;
+    }
+
+    private void Update()
+    {
+        isStarted = IsClient || IsServer;
+
+        if(!isStarted && prevIsStarted)
+        {
+            OnShutdown();
+        }
+
+        prevIsStarted = isStarted;
+    }
+
+    void OnShutdown()
+    {
+        if (GameRoom.Instance) Destroy(GameRoom.Instance.gameObject);
+        TanksNetworkManager.Singleton.DontDestroy = false;
+        Destroy(gameObject);
+        SceneManager.LoadScene("MenuScene");
     }
 
     void OnDisconnect(ulong id)
     {
         if(id == LocalClientId)
         {
-            SceneManager.LoadScene("MenuScene");
+            //if (GameRoom.Instance) Destroy(GameRoom.Instance.gameObject);
+            //TanksNetworkManager.Singleton.DontDestroy = false;
+            //Destroy(gameObject);
+            //SceneManager.LoadScene("MenuScene");
         }
     }
 

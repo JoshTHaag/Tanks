@@ -1,25 +1,17 @@
 using System;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using MLAPI.Serialization;
-using System.Reflection;
-using System.Linq;
 
 [Serializable]
 public class Player : NetworkListExElement
 {
     [SerializeField] private ulong id;
     [SerializeField] private string name;
+    [SerializeField] private bool isReady;
+    [SerializeField] private bool isHost;
 
     public ulong Id
     { 
-        get
-        {
-            return id;
-        }
+        get { return id; }
         set
         {
             if(id != value)
@@ -32,14 +24,40 @@ public class Player : NetworkListExElement
 
     public string Name
     {
-        get
-        {
-            return name;
-        }
+        get { return name; }
         set
         {
-            name = value;
-            OnElementChanged(this);
+            if(name != value)
+            {
+                name = value;
+                OnElementChanged(this);
+            }
+        }
+    }
+
+    public bool IsReady
+    {
+        get { return isReady; }
+        set
+        {
+            if (isReady != value)
+            {
+                isReady = value;
+                OnElementChanged(this);
+            }
+        }
+    }
+
+    public bool IsHost
+    {
+        get { return isHost; }
+        set
+        {
+            if (isHost != value)
+            {
+                isHost = value;
+                OnElementChanged(this);
+            }
         }
     }
 

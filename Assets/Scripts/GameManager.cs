@@ -2,17 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using MLAPI;
+using MLAPI.NetworkVariable;
+using MLAPI.Messaging;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
+    public Tank prefabPlayer;
+
     public float maxWind;
     public float minWind;
     public float minWindChange;
     public float maxWindChange;
 
-    public float Wind { get; private set; }
+    public NetworkVariable<float> Wind { get; private set; }
 
-    public UnityEvent<float> OnWindChanged = new UnityEvent<float>();
+    //public UnityEvent<float> OnWindChanged = new UnityEvent<float>();
 
     public static GameManager Instance { get; private set; }
 
@@ -21,7 +26,6 @@ public class GameManager : MonoBehaviour
         if(Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else if(Instance != this)
         {
@@ -37,7 +41,10 @@ public class GameManager : MonoBehaviour
 
         TanksNetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
-        StartGame();
+        if(IsHost)
+        {
+            StartGame();
+        }
     }
 
     private void OnDestroy()
@@ -48,7 +55,13 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
-        Wind = Random.Range(minWind, maxWind);
+        Wind.Value = Random.Range(minWind, maxWind);
+
+        foreach(var p in GameRoom.Instance.Players)
+        {
+            Tank newTank = Instantiate(prefabPlayer);
+            newTank.GetComponent<NetworkObject>().SpawnAsPlayerObject(p.Id, null, true);
+        }
     }
 
     void OnClientConnected(ulong id)
@@ -56,10 +69,18 @@ public class GameManager : MonoBehaviour
         Debug.Log(TanksNetworkManager.Singleton.ConnectedClients[id]);
     }
 
-    public void ChangeWind()
+    //public void ChangeWind()
+    //{
+    //    float change = Random.Range(minWindChange, maxWindChange);
+    //    Wind.Value = Mathf.Clamp(Wind.Value + change, minWind, maxWind);
+    //    OnWindChanged.Invoke(Wind.Value);
+    //}
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ChangeWind_ServerRpc()
     {
         float change = Random.Range(minWindChange, maxWindChange);
-        Wind = Mathf.Clamp(Wind + change, minWind, maxWind);
-        OnWindChanged.Invoke(Wind);
+        Wind.Value = Mathf.Clamp(Wind.Value + change, minWind, maxWind);
+        //OnWindChanged.Invoke(Wind.Value);
     }
 }

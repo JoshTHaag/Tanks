@@ -17,6 +17,9 @@ public class PowerGauge : Gauge
     {
         base.Update();
 
+        if (!tank)
+            return;
+
         tank.SetPower(gaugeValPerc * maxVal);
     }
 

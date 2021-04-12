@@ -1,7 +1,9 @@
 using UnityEngine;
+using MLAPI;
+using MLAPI.NetworkVariable;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class Projectile : MonoBehaviour
+public class Projectile : NetworkBehaviour
 {
     [SerializeField, HideInInspector] Rigidbody2D rb;
 
@@ -9,20 +11,28 @@ public class Projectile : MonoBehaviour
     public float maxLifeTime = 10f;
 
     [Header("")]
-    public Vector2 force;
-
+    public NetworkVariable<Vector2> force = new NetworkVariable<Vector2>(new NetworkVariableSettings() {
+        SendTickrate = -1f
+    });
+    
     float startTime;
 
     public void Start()
     {
-        rb.AddForce(force, ForceMode2D.Impulse);
+        rb.AddForce(force.Value, ForceMode2D.Impulse);
         startTime = Time.time;
+    }
+
+    public void HostInit(float force)
+    {
+        this.force.Value = transform.right * force;
+        NetworkObject.Spawn(null, true);
     }
 
     private void FixedUpdate()
     {
         Vector2 windForce = Vector2.right;
-        windForce.x *= GameManager.Instance.Wind;
+        windForce.x *= GameManager.Instance.Wind.Value;
         rb.AddForce(windForce * 0.05f);
 
         if (Time.time > startTime + maxLifeTime)
@@ -31,7 +41,7 @@ public class Projectile : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.ChangeWind();
+        GameManager.Instance.ChangeWind_ServerRpc();
     }
 
     private void OnValidate()

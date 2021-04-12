@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using MLAPI;
+using MLAPI.Messaging;
 
-public class Tank : MonoBehaviour
+public class Tank : NetworkBehaviour
 {
     [Header("Ground Movement")]
     public float groundSpeed;
@@ -31,6 +33,18 @@ public class Tank : MonoBehaviour
     {
         Collider2D bodyCollider = GetComponent<Collider2D>();
         rb.centerOfMass = rb.centerOfMass - (Vector2.up * bodyCollider.bounds.extents);
+    }
+
+    private void Start()
+    {
+        if(IsOwner)
+        {
+            GetComponentInChildren<PlayerTankController>().SetTank(this);
+
+            FindObjectOfType<PowerGauge>().SetTank(this);
+            FindObjectOfType<AimGauge>().SetTank(this);
+            FindObjectOfType<FireButton>().SetTank(this);
+        }
     }
 
     private void Update()
@@ -69,9 +83,19 @@ public class Tank : MonoBehaviour
 
     public void Fire()
     {
-        Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
         float force = Mathf.Clamp(power, minFireForce, maxFireForce);
-        proj.force = proj.transform.right * force;
+        Fire_ServerRpc(turretMuzzle.position, turretMuzzle.rotation.eulerAngles.z, force);
+
+        //float force = Mathf.Clamp(power, minFireForce, maxFireForce);
+        //Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
+        //proj.force = proj.transform.right * force;
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void Fire_ServerRpc(Vector2 position, float rotation, float force, ServerRpcParams rpcParams = default)
+    {
+        Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
+        proj.HostInit(force);
     }
 
     private void OnValidate()

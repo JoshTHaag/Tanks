@@ -54,11 +54,13 @@ MonoBehaviour:
     - MenuScene
     - LobbyScene
     - GameScene
-    AllowRuntimeSceneChanges: 0
+    AllowRuntimeSceneChanges: 1
     NetworkPrefabs:
     - Prefab: {fileID: 2498828809500692870, guid: 59ec1048977e4de4c883702488e16a4c, type: 3}
       PlayerPrefab: 0
     - Prefab: {fileID: 329963013429933996, guid: 10ca2c62d5cf5a94094f37c5d8d9bddc, type: 3}
+      PlayerPrefab: 0
+    - Prefab: {fileID: 6552664350859257627, guid: f11579a1b66f58246bb92212a0d66d78, type: 3}
       PlayerPrefab: 0
     PlayerPrefabHash:
       id: 0
@@ -107,7 +109,7 @@ MonoBehaviour:
   ConnectPort: 7777
   ServerListenPort: 7777
   ServerWebsocketListenPort: 8887
-  SupportWebsocket: 1
+  SupportWebsocket: 0
   Channels: []
   UseMLAPIRelay: 0
   MLAPIRelayAddress: 184.72.104.138

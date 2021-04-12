@@ -10,6 +10,9 @@ public class AimGauge : Gauge
     {
         base.Update();
 
+        if (!tank)
+            return;
+
         tank.Aim(gaugeValPerc * maxVal);
     }
 

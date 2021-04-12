@@ -7,6 +7,8 @@ using MLAPI.NetworkVariable.Collections;
 using MLAPI.Messaging;
 using Tanks.Networking;
 using UnityEngine.SceneManagement;
+using MLAPI.Transports;
+using MLAPI.Configuration;
 
 public class GameRoom : NetworkBehaviour
 {
@@ -29,8 +31,7 @@ public class GameRoom : NetworkBehaviour
             return;
         }
 
-        if (Players == null)
-            Players = new NetworkListEx<Player>();
+        Players = new NetworkListEx<Player>();
 
         onSingletonInitialized();
     }
@@ -50,13 +51,15 @@ public class GameRoom : NetworkBehaviour
     {
         if (Instance != this)
             return;
+
+        Instance = null;
     }
 
     private void Update()
     {
         if(Input.GetKeyDown(KeyCode.Space))
         {
-            foreach(var p in Players)
+            foreach (var p in Players)
             {
                 Debug.Log(p);
             }
@@ -65,6 +68,9 @@ public class GameRoom : NetworkBehaviour
 
     public void HostInit()
     {
+        if(Players == null)
+            Players = new NetworkListEx<Player>();
+
         TanksNetworkManager.Singleton.OnClientConnectedCallback += Host_ClientConnected;
         TanksNetworkManager.Singleton.OnClientDisconnectCallback += Host_ClientDisconnected;
         GetComponent<NetworkObject>().Spawn();
@@ -95,10 +101,6 @@ public class GameRoom : NetworkBehaviour
         Debug.Log("Host_ClientDisconnected: " + id);
 
         var disconnectedPlayer = Players.Find(x => x.Id == id);
-        //Player disconnectedPlayer = null;
-        //foreach (var p in Players)
-        //    if (p.id == id)
-        //        disconnectedPlayer = p;
 
         if (disconnectedPlayer)
         {
@@ -106,20 +108,43 @@ public class GameRoom : NetworkBehaviour
         }
     }
 
+    public void StartGame()
+    {
+        var loadProg = MLAPI.SceneManagement.NetworkSceneManager.SwitchScene("GameScene");
+
+        loadProg.OnComplete += (timedOut) => 
+        {
+            //GameManager.Instance.NetworkObject.Spawn(null, true);
+        };
+    }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RequestNameChange_ServerRpc(ulong id, string name)
+    public void RequestNameChange_ServerRpc(string name, ServerRpcParams rpcParams = default)
     {
-        var player = Players.Find(x => x.Id == id);
+        var player = Players.Find(x => x.Id == rpcParams.Receive.SenderClientId);
 
         if (player == null)
         {
-            Debug.LogError("player with id " + id + " not found");
+            Debug.LogError("player with id " + rpcParams.Receive.SenderClientId + " not found");
             return;
         }
 
         if (player.Name != name)
             player.Name = name;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void PlayerReady_ServerRpc(ServerRpcParams rpcParams = default)
+    {
+        var player = Players.Find(x => x.Id == rpcParams.Receive.SenderClientId);
+
+        if (player == null)
+        {
+            Debug.LogError("player with id " + rpcParams.Receive.SenderClientId + " not found");
+            return;
+        }
+
+        player.IsReady = !player.IsReady;
     }
 
     [QFSW.QC.Command("log-players")]
