@@ -581,6 +581,10 @@ namespace Utilities2D {
 				sprite = spriteRenderer.sprite;
 				texture = sprite.texture;
 			}
+			else
+            {
+				return;
+            }
 
 			if (customUVOffset == null) {
 				customUVOffset = Vector2D.Zero();

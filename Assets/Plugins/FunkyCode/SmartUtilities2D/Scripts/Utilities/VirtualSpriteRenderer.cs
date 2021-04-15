@@ -20,6 +20,10 @@ namespace Utilities2D {
 			if (spriteRenderer != null) {
 				sprite = spriteRenderer.sprite;
 			}
+			else
+            {
+				return;
+            }
 			
 			sortingLayerID = spriteRenderer.sortingLayerID;
 			sortingLayerName = spriteRenderer.sortingLayerName;

@@ -68,6 +68,8 @@ namespace Slicer2D {
 		// Instantiate Performane will cause issues because colliders and sprite renderer is removed
 		public bool afterSliceRemoveOrigin = true;
 
+		public bool applySliceToOrigin = false;
+
 		public void OnDestroy() {
 			if (Application.isPlaying) {
 				if (meshFilter != null) {
@@ -254,15 +256,19 @@ namespace Slicer2D {
 					break;
 
 				case TextureType.Sprite:
-					if (spriteRenderer == null) {
-						spriteRendererComponent = GetComponent<SpriteRenderer>();
+                    if (spriteRenderer == null)
+                    {
+                        spriteRendererComponent = GetComponent<SpriteRenderer>();
 
-						spriteRenderer = new VirtualSpriteRenderer(spriteRendererComponent);
-					} else {
-						if (Settings.GetBatching(materialSettings.batchMaterial) == false) {
-							spriteRenderer.material = new Material(spriteRenderer.material);
-						}
-					}
+                        spriteRenderer = new VirtualSpriteRenderer(spriteRendererComponent);
+                    }
+					else if (spriteRenderer.material != null)
+					{
+						if (Settings.GetBatching(materialSettings.batchMaterial) == false)
+                        {
+                            spriteRenderer.material = new Material(spriteRenderer.material);
+                        }
+                    }
 					break;
 
 				case TextureType.Sprite3D:
@@ -326,6 +332,7 @@ namespace Slicer2D {
 			PhysicsMaterial2D material = collider2D.sharedMaterial;
 			bool isTrigger = collider2D.isTrigger;	
 
+			// TODO: (Josh) This might need some addressing in the future?
 			switch(Settings.GetComponentsCopy(instantiateMethod)) {
 				case InstantiationMethod.Performance: 
 
@@ -356,80 +363,106 @@ namespace Slicer2D {
 					break;
 			}
 
+			int indexOfLargest = 0;
+			if(applySliceToOrigin)
+            {
+				double prevLargestArea = double.MinValue;
+				for(int i = 0; i < result.Count; ++i)
+				{
+					double area = result[i].GetArea();
+					if (area > prevLargestArea)
+					{
+						indexOfLargest = i;
+						prevLargestArea = area;
+					}
+				}
+            }
+
 			int name_id = 1;
-			foreach (Polygon2D id in result) {
+			for (int i = 0; i < result.Count; ++i)
+			{
 				GameObject gObject = null;
 
-				switch(Settings.GetComponentsCopy(instantiateMethod)) {
-					case InstantiationMethod.Performance: 
-						Slicer2D.Profiler.IncSlicesCreatedWithPerformance();
-
-						gObject = Instantiate(gameObject, transform.position, transform.rotation, transform.parent);
-					
-						break;
-
-					case InstantiationMethod.Quality: 
-						Slicer2D.Profiler.IncSlicesCreatedWithQuality();
-
-						gObject = new GameObject();
-						gObject.transform.parent = transform.parent;
-						gObject.transform.position = transform.position;
-						gObject.transform.rotation = transform.rotation;
-					
-						break;
+				if(applySliceToOrigin && i == indexOfLargest)
+                {
+					gObject = gameObject;
 				}
+				else
+                {
+					switch(Settings.GetComponentsCopy(instantiateMethod)) {
+						case InstantiationMethod.Performance: 
+							Slicer2D.Profiler.IncSlicesCreatedWithPerformance();
+
+							gObject = Instantiate(gameObject, transform.position, transform.rotation, transform.parent);
+					
+							break;
+
+						case InstantiationMethod.Quality: 
+							Slicer2D.Profiler.IncSlicesCreatedWithQuality();
+
+							gObject = new GameObject();
+							gObject.transform.parent = transform.parent;
+							gObject.transform.position = transform.position;
+							gObject.transform.rotation = transform.rotation;
+					
+							break;
+					}
 				
-				gObject.name = name + " (" + name_id + ")";
-				gObject.transform.localScale = transform.localScale;
+					gObject.name = name + " (" + name_id + ")";
+					gObject.transform.localScale = transform.localScale;
 				
-				gObject.layer = gameObject.layer;
-				gObject.tag = gameObject.tag;
-				
+					gObject.layer = gameObject.layer;
+					gObject.tag = gameObject.tag;			
+
+					switch(Settings.GetComponentsCopy(instantiateMethod)) {
+						case InstantiationMethod.Quality: 
+							Components.Copy(this, gObject);
+							break;
+					}
+                }
+
 				resultGameObjects.Add (gObject);
 
-				switch(Settings.GetComponentsCopy(instantiateMethod)) {
-					case InstantiationMethod.Quality: 
-						Components.Copy(this, gObject);
-						break;
-				}
+				Sliceable2D sliceable = gObject.GetComponent<Sliceable2D> ();
 
-				Sliceable2D slicer = gObject.GetComponent<Sliceable2D> ();
+				sliceable.limit = new Limit();
+				sliceable.limit.counter = limit.counter + 1;
+				sliceable.limit.maxSlices = limit.maxSlices;
+				sliceable.limit.enabled = limit.enabled;
 
-				slicer.limit = new Limit();
-				slicer.limit.counter = limit.counter + 1;
-				slicer.limit.maxSlices = limit.maxSlices;
-				slicer.limit.enabled = limit.enabled;
+				sliceable.eventHandler = new EventHandling();
 
-				slicer.eventHandler = new EventHandling();
+				sliceable.shape = new Shape();
+				sliceable.shape.SetSlicer2D(sliceable);
+				sliceable.shape.ForceUpdate();
 
-				slicer.shape = new Shape();
-				slicer.shape.SetSlicer2D(slicer);
-				slicer.shape.ForceUpdate();
+				sliceable.materialSettings = materialSettings.Copy();
 
-				slicer.materialSettings = materialSettings.Copy();
+				sliceable.anchor = anchor.Copy();
 
-				slicer.anchor = anchor.Copy();
+				if(gObject != gameObject)
+					Components.CopyRigidbody2D(originalRigidBody, sliceable, result[i], originArea);
 
-				Components.CopyRigidbody2D(originalRigidBody, slicer, id, originArea);
-
-				if (Settings.GetCenterOfSliceTransform(centerOfSlice) == CenterOfSliceTransform.ColliderCenter) {
-					Polygon2D localPoly = id.ToLocalSpace (gObject.transform);
+				if (Settings.GetCenterOfSliceTransform(centerOfSlice) == CenterOfSliceTransform.ColliderCenter) 
+				{
+					Polygon2D localPoly = result[i].ToLocalSpace (gObject.transform);
 					Rect bounds = localPoly.GetBounds();
 					Vector2 center = bounds.center;
 			
 					Vector2 centerWorld = new Vector2(center.x * transform.lossyScale.x, center.y * transform.lossyScale.y);
 					gObject.transform.Translate(centerWorld);
 					
-					slicer.materialSettings.offset += center;					
+					sliceable.materialSettings.offset += center;					
 				}
 
 				Collider2D collider = null;
-				switch (colliderType) {
+				switch (colliderType) 
+				{
 					case ColliderType.PolygonCollider2D:
-						collider = (Collider2D)id.ToLocalSpace (gObject.transform).CreatePolygonCollider (gObject);
+						collider = (Collider2D)result[i].ToLocalSpace (gObject.transform).CreatePolygonCollider (gObject);
 						break;
 					case ColliderType.EdgeCollider2D:
-						collider = (Collider2D)id.ToLocalSpace (gObject.transform).CreateEdgeCollider (gObject);
+						collider = (Collider2D)result[i].ToLocalSpace (gObject.transform).CreateEdgeCollider (gObject);
 						break;
 				}
 
@@ -438,19 +471,20 @@ namespace Slicer2D {
 
 				Vector2D uvOffset;
 
-				switch (textureType) {
+				switch (textureType) 
+				{
 					case TextureType.Sprite:
-						slicer.spriteRenderer = spriteRenderer;
-						uvOffset = new Vector2D(slicer.materialSettings.offset);
+						sliceable.spriteRenderer = spriteRenderer;
+						uvOffset = new Vector2D(sliceable.materialSettings.offset);
 						Polygon2D.SpriteToMesh(gObject, spriteRenderer, materialSettings.GetTriangulation(), uvOffset);
 						break;
 
 					case TextureType.Sprite3D:
-						slicer.spriteRenderer = spriteRenderer;
-						uvOffset = new Vector2D(slicer.materialSettings.offset);
+						sliceable.spriteRenderer = spriteRenderer;
+						uvOffset = new Vector2D(sliceable.materialSettings.offset);
 						Polygon2D.SpriteToMesh3D(gObject, spriteRenderer, materialSettings.depth, materialSettings.GetTriangulation(), uvOffset);
 
-						MeshRenderer meshRenderer = slicer.GetComponent<MeshRenderer>();
+						MeshRenderer meshRenderer = sliceable.GetComponent<MeshRenderer>();
 
 						Material[] sharedMaterials = new Material[2];
 						sharedMaterials[1] = spriteRenderer.material;
@@ -461,7 +495,7 @@ namespace Slicer2D {
 						break;
 
 					case TextureType.SpriteAnimation:
-						slicer.textureType = TextureType.Sprite;
+						sliceable.textureType = TextureType.Sprite;
 						Polygon2D.SpriteToMesh(gObject, spriteRenderer, materialSettings.GetTriangulation());
 						break;
 						
@@ -472,11 +506,13 @@ namespace Slicer2D {
 				name_id += 1;
 			}
 				
-			if (afterSliceRemoveOrigin) {	
+			if (afterSliceRemoveOrigin && !applySliceToOrigin) 
+			{	
 				Destroy (gameObject);
 			}
 
 			if (resultGameObjects.Count > 0) {
+
 				slice.originGameObject = gameObject;
 				
 				slice.SetGameObjects(resultGameObjects);

@@ -28,6 +28,7 @@ public class Explosive : MonoBehaviour
 
             foreach (Sliceable2D id in Sliceable2D.GetListCopy())
             {
+                id.applySliceToOrigin = true;
                 Slice2D result = Slicer2D.API.PolygonSlice(id.shape.GetLocal().ToWorldSpace(id.transform), slicePolygon);
                 if (result.GetPolygons().Count > 0)
                 {
@@ -41,7 +42,26 @@ public class Explosive : MonoBehaviour
 
                     if (result.GetPolygons().Count > 0)
                     {
-                        id.PerformResult(result.GetPolygons(), new Slice2D());
+                        var newTerrains = id.PerformResult(result.GetPolygons(), new Slice2D());
+
+                        foreach(var newTerrain in newTerrains)
+                        {
+                            var tanksTerrain = newTerrain.GetComponent<TanksTerrain>();
+                            if(tanksTerrain)
+                            {
+                                PolygonCollider2D collider = collision.collider as PolygonCollider2D;
+                                Vector2[][] paths = new Vector2[collider.pathCount][];
+                                for (int i = 0; i < collider.pathCount; ++i)
+                                {
+                                    paths[i] = collider.GetPath(i);
+                                }
+
+                                if (tanksTerrain.NetworkObject.IsSpawned)
+                                    tanksTerrain.HostTerrainDeformed(paths);
+                                else
+                                    tanksTerrain.HostInit(paths);
+                            }
+                        }
                     }
                     else
                     {
@@ -54,15 +74,6 @@ public class Explosive : MonoBehaviour
             Destroy(gameObject);
 
             Polygon2D.defaultCircleVerticesCount = 25;
-
-            //PolygonCollider2D collider = collision.collider as PolygonCollider2D;
-            //Vector2[][] paths = new Vector2[collider.pathCount][];
-            //for(int i = 0; i < collider.pathCount; ++i)
-            //{
-            //    paths[i] = collider.GetPath(i);
-            //}
-
-            //collision.collider.GetComponent<Terrain>().TerrainSliced_ClientRpc(paths);
         }
     }
 }
