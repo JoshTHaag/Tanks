@@ -3,6 +3,7 @@ using Slicer2D;
 using MLAPI;
 using MLAPI.NetworkVariable;
 using MLAPI.Messaging;
+using MLAPI.Transports;
 using UnityEngine.Assertions;
 
 #if UNITY_EDITOR
@@ -20,6 +21,7 @@ public class TanksTerrain : NetworkBehaviour
 
     NetworkVariable<Vector2[][]> colliderPaths = new NetworkVariable<Vector2[][]>(new NetworkVariableSettings() { 
         //SendTickrate = -1f
+        SendNetworkChannel = (NetworkChannel)Tanks.Networking.TanksNetworkChannel.TerrainUpdate
     });
 
     new PolygonCollider2D collider;
@@ -40,8 +42,15 @@ public class TanksTerrain : NetworkBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        UnityEngine.Debug.Log("Destroyed terrain");
+    }
+
     public void HostInit(Vector2[][] colliderPaths)
     {
+        UnityEngine.Debug.Log("Spawned new terrain");
+
         Assert.IsFalse(NetworkObject.IsSpawned, "HostInit called for TanksTerrain that is already spawned!");
 
         collider = GetComponent<PolygonCollider2D>();

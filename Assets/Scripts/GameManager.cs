@@ -17,8 +17,6 @@ public class GameManager : NetworkBehaviour
 
     public NetworkVariable<float> Wind { get; private set; }
 
-    //public UnityEvent<float> OnWindChanged = new UnityEvent<float>();
-
     public static GameManager Instance { get; private set; }
 
     private void Awake()
@@ -69,18 +67,10 @@ public class GameManager : NetworkBehaviour
         Debug.Log(TanksNetworkManager.Singleton.ConnectedClients[id]);
     }
 
-    //public void ChangeWind()
-    //{
-    //    float change = Random.Range(minWindChange, maxWindChange);
-    //    Wind.Value = Mathf.Clamp(Wind.Value + change, minWind, maxWind);
-    //    OnWindChanged.Invoke(Wind.Value);
-    //}
-
     [ServerRpc(RequireOwnership = false)]
     public void ChangeWind_ServerRpc()
     {
         float change = Random.Range(minWindChange, maxWindChange);
         Wind.Value = Mathf.Clamp(Wind.Value + change, minWind, maxWind);
-        //OnWindChanged.Invoke(Wind.Value);
     }
 }

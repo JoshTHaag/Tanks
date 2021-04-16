@@ -2,7 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using MLAPI;
+using MLAPI.Transports;
+using MLAPI.Transports.UNET;
 using UnityEngine.SceneManagement;
+using MLAPI.Exceptions;
+using MLAPI.Logging;
+using MLAPI.Profiling;
+using MLAPI.Transports.Tasks;
+using UnityEngine.Networking;
+using UnityEngine.Networking.Types;
+using UnityEngine.Networking.PlayerConnection;
+using Tanks.Networking;
 
 public class TanksNetworkManager : NetworkManager
 {
@@ -14,6 +24,16 @@ public class TanksNetworkManager : NetworkManager
     private void Awake()
     {
         OnClientDisconnectCallback += OnDisconnect;
+    }
+
+    private void Start()
+    {
+        var transport = GetComponent<UNetTransport>();
+        transport.Channels.Add(new UNetChannel()
+        {
+            Id = (NetworkChannel)TanksNetworkChannel.TerrainUpdate,
+            Type = QosType.ReliableFragmentedSequenced
+        });
     }
 
     private void Update()
