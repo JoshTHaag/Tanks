@@ -495,14 +495,13 @@ namespace Utilities2D {
 		/// Josh func. Calculate and return the collider paths for this polygon.
 		/// </summary>
 		/// <returns>Returns the collider paths for this polygon</returns>
-		public Vector2[][] GetPaths() // Transform transform
+		public Vector2[][] GetPaths()
 		{
 			List<Vector2> points = new List<Vector2>();
 
 			for(int i = 0; i < pointsList.Count; ++i)
 			{
 				points.Add(pointsList[i].ToVector2());
-				//points[i] -= (Vector2)transform.position;
 			}
 
 			Vector2[][] paths = new Vector2[1 + holesList.Count][];
