@@ -29,46 +29,104 @@ public class Explosive : MonoBehaviour
             foreach (Sliceable2D id in Sliceable2D.GetListCopy())
             {
                 id.applySliceToOrigin = true;
-                Slice2D result = Slicer2D.API.PolygonSlice(id.shape.GetLocal().ToWorldSpace(id.transform), slicePolygon);
-                if (result.GetPolygons().Count > 0)
+                Slice2D slice = Slicer2D.API.PolygonSlice(id.shape.GetLocal().ToWorldSpace(id.transform), slicePolygon);
+                if (slice.GetPolygons().Count > 0)
                 {
-                    foreach (Polygon2D p in new List<Polygon2D>(result.GetPolygons()))
+                    List<Polygon2D> results = slice.GetPolygons();
+
+                    for (int i = 0; i < results.Count; ++i)
                     {
-                        if (slicePolygonDestroy.PolyInPoly(p) == true)
+                        if (slicePolygonDestroy.PolyInPoly(results[i]) == true)
                         {
-                            result.GetPolygons().Remove(p);
+                            //slice.GetPolygons().Remove(p);
+                            results.RemoveAt(i);
                         }
                     }
 
-                    if (result.GetPolygons().Count > 0)
+                    int indexOfLargest = 0;
+                    if(results.Count > 1)
                     {
-                        var newTerrains = id.PerformResult(result.GetPolygons(), new Slice2D());
-
-                        foreach(var newTerrain in newTerrains)
+                        double prevLargestArea = double.MinValue;
+                        for (int i = 0; i < results.Count; ++i)
                         {
-                            var tanksTerrain = newTerrain.GetComponent<TanksTerrain>();
-                            if(tanksTerrain)
+                            double area = results[i].GetArea();
+                            if (area > prevLargestArea)
                             {
-                                PolygonCollider2D collider = collision.collider as PolygonCollider2D;
-                                Vector2[][] paths = new Vector2[collider.pathCount][];
-                                for (int i = 0; i < collider.pathCount; ++i)
-                                {
-                                    paths[i] = collider.GetPath(i);
-                                }
-
-                                if (tanksTerrain.NetworkObject.IsSpawned)
-                                    tanksTerrain.HostTerrainDeformed(paths);
-                                else
-                                    tanksTerrain.HostInit(paths);
+                                indexOfLargest = i;
+                                prevLargestArea = area;
                             }
                         }
                     }
-                    else
+
+                    //slice = new Slice2D();
+                    //slice.SetPolygons(results);
+                    //slice.originGameObject = gameObject;
+
+                    var origin = collision.collider.GetComponent<TanksTerrain>();
+                    for (int i = 0; i < results.Count; ++i)
                     {
-                        // Polygon is Destroyed.
-                        Destroy(id.gameObject);
+                        results[i] = results[i].ToLocalSpace(origin.transform);
+                        Vector2[][] paths = results[i].GetPaths(); // origin.transform
+                        TanksTerrain terrain = null;
+                        if (i == indexOfLargest)
+                        {
+                            terrain = origin;
+
+                            origin.HostTerrainDeformed(paths);                 
+                        }
+                        else
+                        {
+                            terrain = Instantiate(GameManager.Instance.prefabNetTerrain);
+                            terrain.transform.parent = origin.transform.parent;
+                            terrain.transform.position = origin.transform.position;
+                            terrain.transform.rotation = origin.transform.rotation;
+
+                            terrain.Sliceable.limit = new Limit();
+                            terrain.Sliceable.limit.counter = origin.Sliceable.limit.counter + 1;
+                            terrain.Sliceable.limit.maxSlices = origin.Sliceable.limit.maxSlices;
+                            terrain.Sliceable.limit.enabled = origin.Sliceable.limit.enabled;
+
+                            terrain.HostInit(paths);
+                        }
+
+                        terrain.Sliceable.shape = new Shape();
+                        terrain.Sliceable.shape.SetShape(results[i]);
+                        //terrain.Sliceable.shape.SetSlicer2D(terrain.Sliceable);
+                        //terrain.Sliceable.shape.GetLocal();
+                        terrain.Sliceable.shape.ForceUpdate();
                     }
+
+                    //if (result.GetPolygons().Count > 0)
+                    //{
+                    //    var newTerrains = id.PerformResult(result.GetPolygons(), new Slice2D());
+
+                    //    foreach (var newTerrain in newTerrains)
+                    //    {
+                    //        var tanksTerrain = newTerrain.GetComponent<TanksTerrain>();
+                    //        if (tanksTerrain)
+                    //        {
+                    //            PolygonCollider2D collider = collision.collider as PolygonCollider2D;
+                    //            Vector2[][] paths = new Vector2[collider.pathCount][];
+                    //            for (int i = 0; i < collider.pathCount; ++i)
+                    //            {
+                    //                paths[i] = collider.GetPath(i);
+                    //            }
+
+                    //            if (tanksTerrain.NetworkObject.IsSpawned)
+                    //                tanksTerrain.HostTerrainDeformed(paths);
+                    //            else
+                    //                tanksTerrain.HostInit(paths);
+                    //        }
+                    //    }
+                    //}
                 }
+                else
+                {
+                    // Polygon is Destroyed.
+                    //Destroy(id.gameObject);
+                }
+
+                var sliceables = Sliceable2D.GetList();
             }
 
             Destroy(gameObject);

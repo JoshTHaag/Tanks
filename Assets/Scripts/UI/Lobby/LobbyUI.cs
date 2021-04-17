@@ -149,6 +149,9 @@ public class LobbyUI : MonoBehaviour
 
     public void Ready()
     {
+        if (!TanksNetworkManager.Singleton.IsConnectedClient)
+            return;
+
         GameRoom.Instance.PlayerReady_ServerRpc();
     }
 

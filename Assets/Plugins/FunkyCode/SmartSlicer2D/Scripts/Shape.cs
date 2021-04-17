@@ -39,6 +39,11 @@ namespace Slicer2D {
 			return(polygon);
 		}
 
+		public void SetShape(Polygon2D polygon)
+        {
+			this.polygon = polygon;
+        }
+
 		public Polygon2D GetWorld() {
 			movement.Update(slicer);
 

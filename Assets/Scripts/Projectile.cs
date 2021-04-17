@@ -36,12 +36,21 @@ public class Projectile : NetworkBehaviour
         rb.AddForce(windForce * 0.05f);
 
         if (Time.time > startTime + maxLifeTime)
-            Destroy(gameObject);
+            DestroyProjectile();
     }
 
     private void OnDestroy()
     {
-        GameManager.Instance.ChangeWind_ServerRpc();
+        if(IsHost)
+            GameManager.Instance.ChangeWind_ServerRpc();
+    }
+
+    public void DestroyProjectile()
+    {
+        if (IsHost)
+            Destroy(gameObject);
+        else
+            gameObject.SetActive(false);
     }
 
     private void OnValidate()

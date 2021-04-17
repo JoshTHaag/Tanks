@@ -491,6 +491,46 @@ namespace Utilities2D {
 			return(collider);
 		}
 
+		/// <summary>
+		/// Josh func. Calculate and return the collider paths for this polygon.
+		/// </summary>
+		/// <returns>Returns the collider paths for this polygon</returns>
+		public Vector2[][] GetPaths() // Transform transform
+		{
+			List<Vector2> points = new List<Vector2>();
+
+			for(int i = 0; i < pointsList.Count; ++i)
+			{
+				points.Add(pointsList[i].ToVector2());
+				//points[i] -= (Vector2)transform.position;
+			}
+
+			Vector2[][] paths = new Vector2[1 + holesList.Count][];
+
+			paths[0] = points.ToArray();
+
+			if (holesList.Count > 0)
+			{
+				int pathID = 1;
+				List<Vector2> pointList = null;
+
+				foreach (Polygon2D poly in holesList)
+				{
+					pointList = new List<Vector2>();
+
+					foreach (Vector2D p in poly.pointsList)
+					{
+						pointList.Add(p.ToVector2());
+					}
+
+					paths[pathID] = pointList.ToArray();
+					pathID += 1;
+				}
+			}
+
+			return paths;
+		}
+
 		public EdgeCollider2D CreateEdgeCollider(GameObject gameObject) {
 			
 

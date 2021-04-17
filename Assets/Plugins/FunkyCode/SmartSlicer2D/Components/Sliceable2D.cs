@@ -302,27 +302,32 @@ namespace Slicer2D {
 				}
 		}
 
-		public List<GameObject> PerformResult(List<Polygon2D> result, Slice2D slice) {
-			List<GameObject> resultGameObjects = new List<GameObject> ();
+		public List<GameObject> PerformResult(List<Polygon2D> result, Slice2D slice)
+		{
+			List<GameObject> resultGameObjects = new List<GameObject>();
 
-			if (result.Count < 1) {
-				return(resultGameObjects);
+			if (result.Count < 1)
+			{
+				return (resultGameObjects);
 			}
 
 			slice.SetPolygons(result);
 
 			slice.originGameObject = gameObject;
 
-			if (eventHandler.SliceEvent(slice) == false) {
-				return(resultGameObjects);
+			if (eventHandler.SliceEvent(slice) == false)
+			{
+				return (resultGameObjects);
 			}
 
-			if (EventHandling.GlobalSliceEvent(slice) == false) {
-				return(resultGameObjects);
+			if (EventHandling.GlobalSliceEvent(slice) == false)
+			{
+				return (resultGameObjects);
 			}
 
 			double originArea = 1f;
-			if (recalculateMass) {
+			if (recalculateMass)
+			{
 				originArea = shape.GetLocal().GetArea();
 			}
 
@@ -330,44 +335,50 @@ namespace Slicer2D {
 
 			Collider2D collider2D = gameObject.GetComponent<Collider2D>();
 			PhysicsMaterial2D material = collider2D.sharedMaterial;
-			bool isTrigger = collider2D.isTrigger;	
+			bool isTrigger = collider2D.isTrigger;
 
 			// TODO: (Josh) This might need some addressing in the future?
-			switch(Settings.GetComponentsCopy(instantiateMethod)) {
-				case InstantiationMethod.Performance: 
+			switch (Settings.GetComponentsCopy(instantiateMethod))
+			{
+				case InstantiationMethod.Performance:
 
-					switch (textureType) {
+					switch (textureType)
+					{
 						case TextureType.Sprite:
 						case TextureType.Sprite3D:
-							if (spriteRendererComponent) {
+							if (spriteRendererComponent)
+							{
 								DestroyImmediate(spriteRendererComponent);
 								spriteRendererComponent = null;
 							}
 							break;
-						}
+					}
 
 					BoxCollider2D c1 = gameObject.GetComponent<BoxCollider2D>();
-					if (c1 != null) {
+					if (c1 != null)
+					{
 						DestroyImmediate(c1);
 					}
 
 					CircleCollider2D c2 = gameObject.GetComponent<CircleCollider2D>();
-					if (c2 != null) {
+					if (c2 != null)
+					{
 						DestroyImmediate(c2);
 					}
 
 					CapsuleCollider2D c3 = gameObject.GetComponent<CapsuleCollider2D>();
-					if (c3 != null) {
+					if (c3 != null)
+					{
 						DestroyImmediate(c3);
 					}
 					break;
 			}
 
 			int indexOfLargest = 0;
-			if(applySliceToOrigin)
-            {
+			if (applySliceToOrigin)
+			{
 				double prevLargestArea = double.MinValue;
-				for(int i = 0; i < result.Count; ++i)
+				for (int i = 0; i < result.Count; ++i)
 				{
 					double area = result[i].GetArea();
 					if (area > prevLargestArea)
@@ -376,54 +387,56 @@ namespace Slicer2D {
 						prevLargestArea = area;
 					}
 				}
-            }
+			}
 
 			int name_id = 1;
 			for (int i = 0; i < result.Count; ++i)
 			{
 				GameObject gObject = null;
 
-				if(applySliceToOrigin && i == indexOfLargest)
-                {
+				if (applySliceToOrigin && i == indexOfLargest)
+				{
 					gObject = gameObject;
 				}
 				else
-                {
-					switch(Settings.GetComponentsCopy(instantiateMethod)) {
-						case InstantiationMethod.Performance: 
+				{
+					switch (Settings.GetComponentsCopy(instantiateMethod))
+					{
+						case InstantiationMethod.Performance:
 							Slicer2D.Profiler.IncSlicesCreatedWithPerformance();
 
 							gObject = Instantiate(gameObject, transform.position, transform.rotation, transform.parent);
-					
+
 							break;
 
-						case InstantiationMethod.Quality: 
+						case InstantiationMethod.Quality:
 							Slicer2D.Profiler.IncSlicesCreatedWithQuality();
 
 							gObject = new GameObject();
 							gObject.transform.parent = transform.parent;
 							gObject.transform.position = transform.position;
 							gObject.transform.rotation = transform.rotation;
-					
+
 							break;
 					}
-				
+
 					gObject.name = name + " (" + name_id + ")";
 					gObject.transform.localScale = transform.localScale;
-				
-					gObject.layer = gameObject.layer;
-					gObject.tag = gameObject.tag;			
 
-					switch(Settings.GetComponentsCopy(instantiateMethod)) {
-						case InstantiationMethod.Quality: 
+					gObject.layer = gameObject.layer;
+					gObject.tag = gameObject.tag;
+
+					switch (Settings.GetComponentsCopy(instantiateMethod))
+					{
+						case InstantiationMethod.Quality:
 							Components.Copy(this, gObject);
 							break;
 					}
-                }
+				}
 
-				resultGameObjects.Add (gObject);
+				resultGameObjects.Add(gObject);
 
-				Sliceable2D sliceable = gObject.GetComponent<Sliceable2D> ();
+				Sliceable2D sliceable = gObject.GetComponent<Sliceable2D>();
 
 				sliceable.limit = new Limit();
 				sliceable.limit.counter = limit.counter + 1;
@@ -440,29 +453,29 @@ namespace Slicer2D {
 
 				sliceable.anchor = anchor.Copy();
 
-				if(gObject != gameObject)
+				if (gObject != gameObject)
 					Components.CopyRigidbody2D(originalRigidBody, sliceable, result[i], originArea);
 
-				if (Settings.GetCenterOfSliceTransform(centerOfSlice) == CenterOfSliceTransform.ColliderCenter) 
+				if (Settings.GetCenterOfSliceTransform(centerOfSlice) == CenterOfSliceTransform.ColliderCenter)
 				{
-					Polygon2D localPoly = result[i].ToLocalSpace (gObject.transform);
+					Polygon2D localPoly = result[i].ToLocalSpace(gObject.transform);
 					Rect bounds = localPoly.GetBounds();
 					Vector2 center = bounds.center;
-			
+
 					Vector2 centerWorld = new Vector2(center.x * transform.lossyScale.x, center.y * transform.lossyScale.y);
 					gObject.transform.Translate(centerWorld);
-					
-					sliceable.materialSettings.offset += center;					
+
+					sliceable.materialSettings.offset += center;
 				}
 
 				Collider2D collider = null;
-				switch (colliderType) 
+				switch (colliderType)
 				{
 					case ColliderType.PolygonCollider2D:
-						collider = (Collider2D)result[i].ToLocalSpace (gObject.transform).CreatePolygonCollider (gObject);
+						collider = (Collider2D)result[i].ToLocalSpace(gObject.transform).CreatePolygonCollider(gObject);
 						break;
 					case ColliderType.EdgeCollider2D:
-						collider = (Collider2D)result[i].ToLocalSpace (gObject.transform).CreateEdgeCollider (gObject);
+						collider = (Collider2D)result[i].ToLocalSpace(gObject.transform).CreateEdgeCollider(gObject);
 						break;
 				}
 
@@ -471,7 +484,7 @@ namespace Slicer2D {
 
 				Vector2D uvOffset;
 
-				switch (textureType) 
+				switch (textureType)
 				{
 					case TextureType.Sprite:
 						sliceable.spriteRenderer = spriteRenderer;
@@ -490,7 +503,7 @@ namespace Slicer2D {
 						sharedMaterials[1] = spriteRenderer.material;
 						sharedMaterials[0] = materialSettings.sideMaterial;
 
-						meshRenderer.sharedMaterials = sharedMaterials;				
+						meshRenderer.sharedMaterials = sharedMaterials;
 
 						break;
 
@@ -498,33 +511,35 @@ namespace Slicer2D {
 						sliceable.textureType = TextureType.Sprite;
 						Polygon2D.SpriteToMesh(gObject, spriteRenderer, materialSettings.GetTriangulation());
 						break;
-						
+
 					default:
 						break;
-					}
+				}
 
 				name_id += 1;
 			}
-				
-			if (afterSliceRemoveOrigin && !applySliceToOrigin) 
-			{	
-				Destroy (gameObject);
+
+			if (afterSliceRemoveOrigin && !applySliceToOrigin)
+			{
+				Destroy(gameObject);
 			}
 
-			if (resultGameObjects.Count > 0) {
+			if (resultGameObjects.Count > 0)
+			{
 
 				slice.originGameObject = gameObject;
-				
+
 				slice.SetGameObjects(resultGameObjects);
 
-				if (supportJoints == true) {
-					SliceJointEvent (slice);
+				if (supportJoints == true)
+				{
+					SliceJointEvent(slice);
 				}
 
 				eventHandler.Result(slice);
 			}
 
-			return(resultGameObjects);
+			return (resultGameObjects);
 		}
 
 		///// Merger 2D

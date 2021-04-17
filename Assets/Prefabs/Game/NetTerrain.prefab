@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6581641403968857716}
   - component: {fileID: 2841118763279120539}
   - component: {fileID: 4014278568300033810}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: NetTerrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -102,6 +102,7 @@ MonoBehaviour:
     anchorType: 0
     anchorColliders: []
   afterSliceRemoveOrigin: 1
+  applySliceToOrigin: 0
 --- !u!60 &6581641403968857716
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -155,7 +156,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 248904bcd9913df42bbe0bd7ef276386, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

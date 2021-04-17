@@ -20,7 +20,6 @@ public class TanksTerrain : NetworkBehaviour
     public int sortingOrder;
 
     NetworkVariable<Vector2[][]> colliderPaths = new NetworkVariable<Vector2[][]>(new NetworkVariableSettings() { 
-        //SendTickrate = -1f
         SendNetworkChannel = (NetworkChannel)Tanks.Networking.TanksNetworkChannel.TerrainUpdate
     });
 
@@ -28,22 +27,60 @@ public class TanksTerrain : NetworkBehaviour
 
     Sliceable2D sliceable;
 
+    public Sliceable2D Sliceable => sliceable;
+
+    public void Awake()
+    {
+        //if(!IsHost)
+        //{
+            collider = GetComponent<PolygonCollider2D>();
+            sliceable = GetComponent<Sliceable2D>();
+        //}
+    }
+
     void Start()
     {
-        collider = GetComponent<PolygonCollider2D>();
-        sliceable = GetComponent<Sliceable2D>();
+        #region Editor-Only Initialization
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                collider = GetComponent<PolygonCollider2D>();
+                sliceable = GetComponent<Sliceable2D>();
+                GenerateMesh();
+            }
+#endif
+        }
+        #endregion
 
         // The host already has the correct paths at this point.
         if (!IsHost)
         {
             colliderPaths.OnValueChanged += OnColliderPathsChanged;
-            SetColliderPaths(colliderPaths.Value);
-            GenerateMesh();
+
+            // Only do the following if this is a freshly spawned NetTerrain prefab.
+            if(collider.pathCount == 0)
+            {
+                SetColliderPaths(colliderPaths.Value);
+                GenerateMesh();
+            }
         }
+        //else
+        //{
+        //    collider = GetComponent<PolygonCollider2D>();
+        //    sliceable = GetComponent<Sliceable2D>();
+        //}
     }
 
     private void OnDestroy()
     {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+#endif
+
         UnityEngine.Debug.Log("Destroyed terrain");
     }
 
@@ -56,6 +93,9 @@ public class TanksTerrain : NetworkBehaviour
         collider = GetComponent<PolygonCollider2D>();
         sliceable = GetComponent<Sliceable2D>();
 
+        SetColliderPaths(colliderPaths);
+
+        // Modify the network variable so clients get the change too.
         this.colliderPaths.Value = colliderPaths;
 
         GenerateMesh();
@@ -93,6 +133,8 @@ public class TanksTerrain : NetworkBehaviour
             return;
 
         colliderPaths.Value = newPaths;
+
+        SetColliderPaths(newPaths);
 
         GenerateMesh();
     }

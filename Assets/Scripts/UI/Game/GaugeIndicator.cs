@@ -17,13 +17,11 @@ public class GaugeIndicator : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        Debug.Log("OnPointerDown");
         onPointerDown.Invoke();
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        Debug.Log("OnPointerUp");
         onPointerUp.Invoke();
     }
 }
