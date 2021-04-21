@@ -9,7 +9,6 @@ using MLAPI.Messaging;
 public class GameManager : NetworkBehaviour
 {
     public Tank prefabPlayer;
-    public TanksTerrain prefabNetTerrain;
 
     public float maxWind;
     public float minWind;

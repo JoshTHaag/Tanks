@@ -16,6 +16,8 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class TanksTerrain : NetworkBehaviour
 {
+    public TanksTerrain prefabNetTerrain;
+
     public string sortingLayerName;
     public int sortingOrder;
 

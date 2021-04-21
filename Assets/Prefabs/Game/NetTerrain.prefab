@@ -65,6 +65,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4505d737d2b54a74798ca24e4bdd7fc1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  prefabNetTerrain: {fileID: 6667317226554432526}
   sortingLayerName: 
   sortingOrder: 0
 --- !u!114 &8329079775821314851

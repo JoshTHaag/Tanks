@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 3948013435734018994}
   - component: {fileID: 7543302346185115679}
   - component: {fileID: 7335653000838245995}
-  - component: {fileID: 2809966537754854054}
   m_Layer: 8
   m_Name: Shell
   m_TagString: Untagged
@@ -65,7 +64,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ddefc6cc9bd5054ea6be9fa99ecb0e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  explosiveness: 0.6
+  explosiveness: 1
 --- !u!50 &2343306982185155004
 Rigidbody2D:
   serializedVersion: 4
@@ -172,51 +171,3 @@ MonoBehaviour:
   PrefabHashGenerator: Shell
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
---- !u!114 &2809966537754854054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6552664350859257627}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  FixedSendsPerSecond: 45
-  AssumeSyncedSends: 1
-  InterpolatePosition: 1
-  SnapDistance: 10
-  InterpolateServer: 1
-  MinMeters: 0.001
-  MinDegrees: 0.1
-  ExtrapolatePosition: 0
-  MaxSendsToExtrapolate: 5
-  Channel: 
-  EnableRange: 0
-  EnableNonProvokedResendChecks: 0
-  DistanceSendrate:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 20
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 500
-      value: 20
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4

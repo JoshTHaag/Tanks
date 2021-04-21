@@ -85,10 +85,6 @@ public class Tank : NetworkBehaviour
     {
         float force = Mathf.Clamp(power, minFireForce, maxFireForce);
         Fire_ServerRpc(turretMuzzle.position, turretMuzzle.rotation.eulerAngles.z, force);
-
-        //float force = Mathf.Clamp(power, minFireForce, maxFireForce);
-        //Projectile proj = Instantiate(prefabProjectile, turretMuzzle.position, turretMuzzle.rotation);
-        //proj.force = proj.transform.right * force;
     }
 
     [ServerRpc(RequireOwnership = true)]

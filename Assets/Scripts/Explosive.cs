@@ -14,7 +14,8 @@ public class Explosive : MonoBehaviour
         if (!TanksNetworkManager.Singleton.IsHost)
             return;
 
-        if (collision.collider.name.Contains("Terrain"))
+        var hitTerrain = collision.transform.GetComponent<TanksTerrain>();
+        if (hitTerrain)
         {
             Vector2D pos = new Vector2D(transform.position);
 
@@ -42,55 +43,64 @@ public class Explosive : MonoBehaviour
                         }
                     }
 
-                    int indexOfLargest = 0;
-                    if(results.Count > 1)
+                    if(results.Count > 0)
                     {
-                        double prevLargestArea = double.MinValue;
-                        for (int i = 0; i < results.Count; ++i)
+                        int indexOfLargest = 0;
+                        if (results.Count > 1)
                         {
-                            double area = results[i].GetArea();
-                            if (area > prevLargestArea)
+                            double prevLargestArea = double.MinValue;
+                            for (int i = 0; i < results.Count; ++i)
                             {
-                                indexOfLargest = i;
-                                prevLargestArea = area;
+                                double area = results[i].GetArea();
+                                if (area > prevLargestArea)
+                                {
+                                    indexOfLargest = i;
+                                    prevLargestArea = area;
+                                }
                             }
                         }
-                    }
 
-                    var origin = collision.collider.GetComponent<TanksTerrain>();
-                    for (int i = 0; i < results.Count; ++i)
+                        for (int i = 0; i < results.Count; ++i)
+                        {
+                            results[i] = results[i].ToLocalSpace(hitTerrain.transform);
+                            Vector2[][] paths = results[i].GetPaths();
+                            TanksTerrain terrain;
+                            if (i == indexOfLargest)
+                            {
+                                terrain = hitTerrain;
+
+                                // Apply the collider changes to the original terrain.
+                                hitTerrain.HostTerrainDeformed(paths);
+                            }
+                            else
+                            {
+                                terrain = Instantiate(hitTerrain.prefabNetTerrain);
+                                terrain.transform.parent = hitTerrain.transform.parent;
+                                terrain.transform.position = hitTerrain.transform.position;
+                                terrain.transform.rotation = hitTerrain.transform.rotation;
+
+                                terrain.Sliceable.limit = new Limit();
+                                terrain.Sliceable.limit.counter = hitTerrain.Sliceable.limit.counter + 1;
+                                terrain.Sliceable.limit.maxSlices = hitTerrain.Sliceable.limit.maxSlices;
+                                terrain.Sliceable.limit.enabled = hitTerrain.Sliceable.limit.enabled;
+
+                                // Initialize the new networked terrain gameobject.
+                                terrain.HostInit(paths);
+                            }
+
+                            // Update the host sliceable's shape.
+                            terrain.Sliceable.shape = new Shape();
+                            terrain.Sliceable.shape.SetShape(results[i]);
+                            terrain.Sliceable.shape.ForceUpdate();
+                        }
+
+                    }
+                    else
                     {
-                        results[i] = results[i].ToLocalSpace(origin.transform);
-                        Vector2[][] paths = results[i].GetPaths();
-                        TanksTerrain terrain;
-                        if (i == indexOfLargest)
-                        {
-                            terrain = origin;
-
-                            // Apply the collider changes to the original terrain.
-                            origin.HostTerrainDeformed(paths);                 
-                        }
-                        else
-                        {
-                            terrain = Instantiate(GameManager.Instance.prefabNetTerrain);
-                            terrain.transform.parent = origin.transform.parent;
-                            terrain.transform.position = origin.transform.position;
-                            terrain.transform.rotation = origin.transform.rotation;
-
-                            terrain.Sliceable.limit = new Limit();
-                            terrain.Sliceable.limit.counter = origin.Sliceable.limit.counter + 1;
-                            terrain.Sliceable.limit.maxSlices = origin.Sliceable.limit.maxSlices;
-                            terrain.Sliceable.limit.enabled = origin.Sliceable.limit.enabled;
-
-                            // Initialize the new networked terrain gameobject.
-                            terrain.HostInit(paths);
-                        }
-
-                        // Update the host sliceable's shape.
-                        terrain.Sliceable.shape = new Shape();
-                        terrain.Sliceable.shape.SetShape(results[i]);
-                        terrain.Sliceable.shape.ForceUpdate();
+                        if(id.GetComponent<TanksTerrain>())
+                            Destroy(id.gameObject);
                     }
+
                 }
             }
 
