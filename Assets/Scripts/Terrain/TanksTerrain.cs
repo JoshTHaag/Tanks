@@ -33,11 +33,8 @@ public class TanksTerrain : NetworkBehaviour
 
     public void Awake()
     {
-        //if(!IsHost)
-        //{
-            collider = GetComponent<PolygonCollider2D>();
-            sliceable = GetComponent<Sliceable2D>();
-        //}
+        collider = GetComponent<PolygonCollider2D>();
+        sliceable = GetComponent<Sliceable2D>();
     }
 
     void Start()
@@ -67,11 +64,6 @@ public class TanksTerrain : NetworkBehaviour
                 GenerateMesh();
             }
         }
-        //else
-        //{
-        //    collider = GetComponent<PolygonCollider2D>();
-        //    sliceable = GetComponent<Sliceable2D>();
-        //}
     }
 
     private void OnDestroy()
@@ -160,6 +152,8 @@ public class TanksTerrain : NetworkBehaviour
     {
         MeshFilter mf = GetComponent<MeshFilter>();
 
+        var rb = GetComponent<Rigidbody2D>();
+
         Mesh mesh = collider.CreateMesh(false, false);
 
         Vector3[] verts = mesh.vertices;
@@ -167,7 +161,8 @@ public class TanksTerrain : NetworkBehaviour
 
         for (int x = 0; x < mesh.vertices.Length; ++x)
         {
-            verts[x] -= transform.position;
+            if(!rb)
+                verts[x] -= transform.position;
             verts[x].x /= transform.lossyScale.x;
             verts[x].y /= transform.lossyScale.y;
             uv[x] = verts[x];

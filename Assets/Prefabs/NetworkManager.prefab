@@ -110,7 +110,7 @@ MonoBehaviour:
   ConnectAddress: 127.0.0.1
   ConnectPort: 7777
   ServerListenPort: 7777
-  ServerWebsocketListenPort: 8886
+  ServerWebsocketListenPort: 7778
   SupportWebsocket: 0
   Channels: []
   UseMLAPIRelay: 0

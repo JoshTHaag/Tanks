@@ -564,7 +564,7 @@ MonoBehaviour:
   _theme: {fileID: 11400000, guid: 5a19be32700ef4a13bfa337a662ef25b, type: 2}
   _keyConfig: {fileID: 11400000, guid: 090da11157287de47ae5c615b8ed3cf9, type: 2}
   _verboseErrors: 1
-  _verboseLogging: 2
+  _verboseLogging: 4
   _openOnLogLevel: 0
   _interceptDebugLogger: 1
   _interceptWhilstInactive: 1

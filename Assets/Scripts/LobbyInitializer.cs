@@ -47,7 +47,21 @@ public class LobbyInitializer : MonoBehaviour
         }
         else
         {
-            TanksNetworkManager.Singleton.StartClient();
+            Debug.Log("starting client");
+            bool success = true;
+
+            try 
+            { 
+                TanksNetworkManager.Singleton.StartClient();            
+            }
+            catch(System.Exception ex)
+            {
+                Debug.LogError(ex);
+                success = false;
+            }
+
+            if(success)
+                Debug.Log("started client");
         }
 
         TanksNetworkManager.HostOnLobbyStartup = false;

@@ -40,8 +40,11 @@ public class Explosive : MonoBehaviour
                         if (slicePolygonDestroy.PolyInPoly(results[i]) == true)
                         {
                             results.RemoveAt(i);
+                            i--;
                         }
                     }
+
+                    UnityEngine.Debug.Log("slice results: " + results.Count);
 
                     if(results.Count > 0)
                     {
